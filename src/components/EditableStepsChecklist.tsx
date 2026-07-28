@@ -364,33 +364,118 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
 
         <div className="pt-2">
           {showNewInput ? (
-            <div className="flex items-center gap-2">
-              <Plus className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Input
-                autoFocus
-                placeholder="Nome da etapa..."
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addStep();
-                  } else if (e.key === "Escape") {
+            <div className="rounded-md border p-3 space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Nome da etapa</Label>
+                <Input
+                  autoFocus
+                  placeholder="Nome da etapa..."
+                  value={draft.title}
+                  onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addStep();
+                    } else if (e.key === "Escape") {
+                      setShowNewInput(false);
+                      setDraft(emptyDraft);
+                    }
+                  }}
+                  disabled={isAddingNew}
+                  className="h-9"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Descrição</Label>
+                <Textarea
+                  rows={3}
+                  placeholder="Adicione uma descrição..."
+                  value={draft.description}
+                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Data de entrega</Label>
+                <Popover open={newDateOpen} onOpenChange={setNewDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full justify-start font-normal">
+                      <CalendarIcon className="w-4 h-4 mr-2" />
+                      {draft.due_date
+                        ? format(parseDbDate(draft.due_date), "dd 'de' MMM 'de' yyyy", { locale: ptBR })
+                        : "Sem data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarPicker
+                      mode="single"
+                      selected={draft.due_date ? parseDbDate(draft.due_date) : undefined}
+                      onSelect={(date) => {
+                        setDraft({ ...draft, due_date: date ? formatDateDb(date) : null });
+                        setNewDateOpen(false);
+                      }}
+                      locale={ptBR}
+                      initialFocus
+                    />
+                    {draft.due_date && (
+                      <div className="p-2 border-t">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            setDraft({ ...draft, due_date: null });
+                            setNewDateOpen(false);
+                          }}
+                        >
+                          Remover data
+                        </Button>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <LinkIconLucide className="w-3 h-3" /> Trabalho escrito
+                </Label>
+                <Input
+                  placeholder="https://..."
+                  value={draft.google_docs_link}
+                  onChange={(e) => setDraft({ ...draft, google_docs_link: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <LinkIconLucide className="w-3 h-3" /> Apresentação
+                </Label>
+                <Input
+                  placeholder="https://..."
+                  value={draft.canva_link}
+                  onChange={(e) => setDraft({ ...draft, canva_link: e.target.value })}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
                     setShowNewInput(false);
-                    setNewTitle("");
-                  }
-                }}
-                onBlur={() => {
-                  if (newTitle.trim()) {
-                    addStep();
-                  } else {
-                    setShowNewInput(false);
-                  }
-                }}
-                disabled={isAddingNew}
-                className="h-8"
-              />
-              {isAddingNew && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                    setDraft(emptyDraft);
+                  }}
+                  disabled={isAddingNew}
+                >
+                  Cancelar
+                </Button>
+                <Button size="sm" onClick={addStep} disabled={isAddingNew || !draft.title.trim()}>
+                  {isAddingNew && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Criar etapa
+                </Button>
+              </div>
             </div>
           ) : (
             <Button
