@@ -60,9 +60,26 @@ const formatDateDb = (date: Date): string => {
   return `${y}-${m}-${d}`;
 };
 
+interface NewStepDraft {
+  title: string;
+  description: string;
+  due_date: string | null;
+  google_docs_link: string;
+  canva_link: string;
+}
+
+const emptyDraft: NewStepDraft = {
+  title: "",
+  description: "",
+  due_date: null,
+  google_docs_link: "",
+  canva_link: "",
+};
+
 export default function EditableStepsChecklist({ taskId, steps, onStepsChange }: Props) {
   const { toast } = useToast();
-  const [newTitle, setNewTitle] = useState("");
+  const [draft, setDraft] = useState<NewStepDraft>(emptyDraft);
+  const [newDateOpen, setNewDateOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [showNewInput, setShowNewInput] = useState(false);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
