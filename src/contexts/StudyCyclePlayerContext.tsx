@@ -114,6 +114,13 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
   const currentBlockRef = useRef<any>(null);
   /** Focus session id for the block currently being studied (one record per block). */
   const currentBlockSessionIdRef = useRef<string | null>(null);
+  /**
+   * Seconds of this block already registered by PREVIOUS focus sessions
+   * (e.g. the block was paused/closed and is now being resumed). The current
+   * session must only register the time studied after this baseline.
+   */
+  const sessionBaseSecondsRef = useRef(0);
+
 
   const { open: openPiPHook, isOpen: pipOpen, pipContainer, isSupported: pipSupported } = useDocumentPiP({ width: 280, height: 320 });
 
