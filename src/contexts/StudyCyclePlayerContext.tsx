@@ -420,8 +420,10 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
       // silent
     }
     lastSavedElapsedRef.current = 0;
+    sessionBaseSecondsRef.current = 0;
     currentBlockSessionIdRef.current = null; // next block starts a fresh record
     clearActiveSession();
+
     setCycle((prev) => prev ? { ...prev, current_block_elapsed_time: 0 } : prev);
 
     toast.success(`✅ ${currentBlock?.subject?.name || "Bloco"} concluído! (${realMinutes}min)`);
