@@ -114,6 +114,13 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
   const currentBlockRef = useRef<any>(null);
   /** Focus session id for the block currently being studied (one record per block). */
   const currentBlockSessionIdRef = useRef<string | null>(null);
+  /**
+   * Seconds of this block already registered by PREVIOUS focus sessions
+   * (e.g. the block was paused/closed and is now being resumed). The current
+   * session must only register the time studied after this baseline.
+   */
+  const sessionBaseSecondsRef = useRef(0);
+
 
   const { open: openPiPHook, isOpen: pipOpen, pipContainer, isSupported: pipSupported } = useDocumentPiP({ width: 280, height: 320 });
 
@@ -164,13 +171,17 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
       }
     }
 
-    // Upsert a SINGLE focus session covering the whole current block
+    // Upsert a SINGLE focus session covering only THIS study session of the block
     const uid = userIdRef.current;
     if (!uid) return;
-    const minutes = Math.max(1, Math.round(totalElapsed / 60));
+    // Only the time studied after the baseline already registered previously
+    const sessionElapsed = totalElapsed - sessionBaseSecondsRef.current;
+    if (sessionElapsed <= 0) return;
+    const minutes = Math.max(1, Math.round(sessionElapsed / 60));
     const block = currentBlockRef.current;
     const blockIdx = currentIndexRef.current;
-    const startedAt = new Date(Date.now() - totalElapsed * 1000);
+    const startedAt = new Date(Date.now() - sessionElapsed * 1000);
+
     try {
       // Resolve the block's session id from memory or persisted marker so a
       // remount never causes a new fragmented record.
@@ -230,7 +241,12 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     setCompletedBlocks(set);
     setElapsedSeconds(savedElapsed);
     lastSavedElapsedRef.current = savedElapsed;
+    // Time already registered in previous sessions of this block: the new
+    // session must only register the additional time studied from now on.
+    sessionBaseSecondsRef.current = savedElapsed;
     currentBlockSessionIdRef.current = null;
+    clearActiveSession();
+
     setBreakRemaining(BREAK_SECONDS);
     setMode("study");
     setIsRunning(false);
@@ -256,7 +272,9 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     setIsPaused(false);
     setElapsedSeconds(0);
     lastSavedElapsedRef.current = 0;
+    sessionBaseSecondsRef.current = 0;
     currentBlockSessionIdRef.current = null;
+
     setMode("study");
   }, [clearTimer, cycle, mode, currentIndex, persistProgress, saveProgressAndLogTime]);
 
@@ -304,7 +322,9 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     setCurrentIndex(nextIdx);
     setElapsedSeconds(0);
     lastSavedElapsedRef.current = 0;
+    sessionBaseSecondsRef.current = 0;
     currentBlockSessionIdRef.current = null;
+
     clearActiveSession();
     setTargetReached(false);
     setMode("study");
@@ -333,41 +353,41 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     const target = (blocks[currentIndex]?.allocated_minutes || 0) * 60;
     const blockFinished = target > 0 ? realElapsed >= target : realElapsed > 0;
 
-    // Upsert the SINGLE block record with the full studied time + questions
-    if (user && (realElapsed > 0 || qTotal > 0)) {
+    // Register ONLY the time studied in this session (not the block total)
+    const sessionElapsed = Math.max(0, realElapsed - sessionBaseSecondsRef.current);
+    const sessionMinutes = sessionElapsed > 0 ? Math.max(1, Math.round(sessionElapsed / 60)) : 0;
+    if (user && (sessionElapsed > 0 || qTotal > 0)) {
       await registerActivity(user.id);
       const block = blocks[currentIndex];
-      const minutes = realElapsed > 0 ? realMinutes : 0;
-      const startedAt = new Date(Date.now() - Math.max(realElapsed, 1) * 1000);
+      const startedAt = new Date(Date.now() - Math.max(sessionElapsed, 1) * 1000);
       try {
         const sessionId = currentBlockSessionIdRef.current || readActiveSession(cycle.id, currentIndex);
         if (sessionId) {
           await updateFocusSession(sessionId, {
             startedAt,
-            durationMinutes: minutes,
+            durationMinutes: sessionMinutes,
             questionsTotal: qTotal,
             questionsCorrect: qCorrect,
             subjectId: block?.subject_id ?? null,
           });
           currentBlockSessionIdRef.current = sessionId;
-          if (!blockFinished) writeActiveSession(cycle.id, currentIndex, sessionId);
         } else {
           const created = await createFocusSession(
             user.id,
             startedAt,
-            minutes,
+            sessionMinutes,
             block?.subject_id,
             cycle.id,
             qTotal,
             qCorrect,
           );
           currentBlockSessionIdRef.current = created?.id ?? null;
-          if (created?.id && !blockFinished) writeActiveSession(cycle.id, currentIndex, created.id);
         }
       } catch {
         // silent
       }
     }
+
 
     if (!blockFinished) {
       // Condition A: Fractional study — persist delta, keep block active, exit player.
@@ -380,10 +400,13 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
         }
       }
       lastSavedElapsedRef.current = realElapsed;
+      // This session's time is now registered; a future resume starts a new record
+      sessionBaseSecondsRef.current = realElapsed;
       const remainingMin = Math.max(0, Math.ceil((target - realElapsed) / 60));
       toast.success(
-        `⏸️ ${currentBlock?.subject?.name || "Bloco"} pausado (${realMinutes}min). Faltam ~${remainingMin}min — você retoma de onde parou.`
+        `⏸️ ${currentBlock?.subject?.name || "Bloco"} pausado (+${sessionMinutes}min, total ${realMinutes}min). Faltam ~${remainingMin}min — você retoma de onde parou.`
       );
+
       // Update in-memory cycle so reopening reflects new accumulated time
       setCycle((prev) => prev ? { ...prev, current_block_elapsed_time: realElapsed } : prev);
       setIsExpanded(false);
@@ -401,8 +424,10 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
       // silent
     }
     lastSavedElapsedRef.current = 0;
+    sessionBaseSecondsRef.current = 0;
     currentBlockSessionIdRef.current = null; // next block starts a fresh record
     clearActiveSession();
+
     setCycle((prev) => prev ? { ...prev, current_block_elapsed_time: 0 } : prev);
 
     toast.success(`✅ ${currentBlock?.subject?.name || "Bloco"} concluído! (${realMinutes}min)`);
@@ -441,6 +466,7 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     // clear the marker so the next block starts a fresh record.
     await saveProgressAndLogTime();
     currentBlockSessionIdRef.current = null;
+    sessionBaseSecondsRef.current = 0;
     clearActiveSession();
     setCompletedBlocks((prev) => new Set(prev).add(currentIndex));
     if (currentIndex < blocks.length - 1) {
@@ -469,6 +495,7 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     } else {
       setElapsedSeconds(0);
       lastSavedElapsedRef.current = 0;
+      sessionBaseSecondsRef.current = 0;
       currentBlockSessionIdRef.current = null;
       clearActiveSession();
       if (cycle) resetCycleElapsedTime(cycle.id).catch(() => {});
@@ -483,6 +510,7 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     // Finalize current block's record before switching, then clear the marker.
     await saveProgressAndLogTime();
     currentBlockSessionIdRef.current = null;
+    sessionBaseSecondsRef.current = 0;
     clearActiveSession();
     setCurrentIndex(index);
     setElapsedSeconds(0);
@@ -503,6 +531,7 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
       setCurrentIndex(nextIdx);
       setElapsedSeconds(0);
       lastSavedElapsedRef.current = 0;
+      sessionBaseSecondsRef.current = 0;
       currentBlockSessionIdRef.current = null;
       clearActiveSession();
       setTargetReached(false);
