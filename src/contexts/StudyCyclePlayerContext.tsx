@@ -466,6 +466,7 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     // clear the marker so the next block starts a fresh record.
     await saveProgressAndLogTime();
     currentBlockSessionIdRef.current = null;
+    sessionBaseSecondsRef.current = 0;
     clearActiveSession();
     setCompletedBlocks((prev) => new Set(prev).add(currentIndex));
     if (currentIndex < blocks.length - 1) {
@@ -494,6 +495,7 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     } else {
       setElapsedSeconds(0);
       lastSavedElapsedRef.current = 0;
+      sessionBaseSecondsRef.current = 0;
       currentBlockSessionIdRef.current = null;
       clearActiveSession();
       if (cycle) resetCycleElapsedTime(cycle.id).catch(() => {});
@@ -508,6 +510,7 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     // Finalize current block's record before switching, then clear the marker.
     await saveProgressAndLogTime();
     currentBlockSessionIdRef.current = null;
+    sessionBaseSecondsRef.current = 0;
     clearActiveSession();
     setCurrentIndex(index);
     setElapsedSeconds(0);
@@ -528,6 +531,7 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
       setCurrentIndex(nextIdx);
       setElapsedSeconds(0);
       lastSavedElapsedRef.current = 0;
+      sessionBaseSecondsRef.current = 0;
       currentBlockSessionIdRef.current = null;
       clearActiveSession();
       setTargetReached(false);
