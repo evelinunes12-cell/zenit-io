@@ -139,7 +139,7 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
   };
 
   const addStep = async () => {
-    const title = newTitle.trim();
+    const title = draft.title.trim();
     if (!title) return;
     setIsAddingNew(true);
     try {
@@ -151,6 +151,10 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
           title,
           status: TODO,
           order_index: nextIndex,
+          description: draft.description.trim() || null,
+          due_date: draft.due_date,
+          google_docs_link: draft.google_docs_link.trim() || null,
+          canva_link: draft.canva_link.trim() || null,
         })
         .select()
         .single();
@@ -168,7 +172,7 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
           canva_link: data.canva_link,
         },
       ]);
-      setNewTitle("");
+      setDraft(emptyDraft);
       setShowNewInput(false);
     } catch (err) {
       logError("add step", err);
@@ -177,6 +181,7 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
       setIsAddingNew(false);
     }
   };
+
 
   const handleEditKey = (e: KeyboardEvent<HTMLInputElement>, step: EditableStep) => {
     if (e.key === "Enter") {
