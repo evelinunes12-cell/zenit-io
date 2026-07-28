@@ -396,10 +396,13 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
         }
       }
       lastSavedElapsedRef.current = realElapsed;
+      // This session's time is now registered; a future resume starts a new record
+      sessionBaseSecondsRef.current = realElapsed;
       const remainingMin = Math.max(0, Math.ceil((target - realElapsed) / 60));
       toast.success(
-        `⏸️ ${currentBlock?.subject?.name || "Bloco"} pausado (${realMinutes}min). Faltam ~${remainingMin}min — você retoma de onde parou.`
+        `⏸️ ${currentBlock?.subject?.name || "Bloco"} pausado (+${sessionMinutes}min, total ${realMinutes}min). Faltam ~${remainingMin}min — você retoma de onde parou.`
       );
+
       // Update in-memory cycle so reopening reflects new accumulated time
       setCycle((prev) => prev ? { ...prev, current_block_elapsed_time: realElapsed } : prev);
       setIsExpanded(false);
