@@ -349,41 +349,41 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     const target = (blocks[currentIndex]?.allocated_minutes || 0) * 60;
     const blockFinished = target > 0 ? realElapsed >= target : realElapsed > 0;
 
-    // Upsert the SINGLE block record with the full studied time + questions
-    if (user && (realElapsed > 0 || qTotal > 0)) {
+    // Register ONLY the time studied in this session (not the block total)
+    const sessionElapsed = Math.max(0, realElapsed - sessionBaseSecondsRef.current);
+    const sessionMinutes = sessionElapsed > 0 ? Math.max(1, Math.round(sessionElapsed / 60)) : 0;
+    if (user && (sessionElapsed > 0 || qTotal > 0)) {
       await registerActivity(user.id);
       const block = blocks[currentIndex];
-      const minutes = realElapsed > 0 ? realMinutes : 0;
-      const startedAt = new Date(Date.now() - Math.max(realElapsed, 1) * 1000);
+      const startedAt = new Date(Date.now() - Math.max(sessionElapsed, 1) * 1000);
       try {
         const sessionId = currentBlockSessionIdRef.current || readActiveSession(cycle.id, currentIndex);
         if (sessionId) {
           await updateFocusSession(sessionId, {
             startedAt,
-            durationMinutes: minutes,
+            durationMinutes: sessionMinutes,
             questionsTotal: qTotal,
             questionsCorrect: qCorrect,
             subjectId: block?.subject_id ?? null,
           });
           currentBlockSessionIdRef.current = sessionId;
-          if (!blockFinished) writeActiveSession(cycle.id, currentIndex, sessionId);
         } else {
           const created = await createFocusSession(
             user.id,
             startedAt,
-            minutes,
+            sessionMinutes,
             block?.subject_id,
             cycle.id,
             qTotal,
             qCorrect,
           );
           currentBlockSessionIdRef.current = created?.id ?? null;
-          if (created?.id && !blockFinished) writeActiveSession(cycle.id, currentIndex, created.id);
         }
       } catch {
         // silent
       }
     }
+
 
     if (!blockFinished) {
       // Condition A: Fractional study — persist delta, keep block active, exit player.
