@@ -241,7 +241,12 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     setCompletedBlocks(set);
     setElapsedSeconds(savedElapsed);
     lastSavedElapsedRef.current = savedElapsed;
+    // Time already registered in previous sessions of this block: the new
+    // session must only register the additional time studied from now on.
+    sessionBaseSecondsRef.current = savedElapsed;
     currentBlockSessionIdRef.current = null;
+    clearActiveSession();
+
     setBreakRemaining(BREAK_SECONDS);
     setMode("study");
     setIsRunning(false);
