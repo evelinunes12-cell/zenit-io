@@ -5,7 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -16,6 +23,9 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
   Link as LinkIconLucide,
+  FileText,
+  Presentation,
+  AlignLeft,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { logError } from "@/lib/logger";
@@ -41,7 +51,16 @@ interface Props {
 }
 
 const DONE = "Concluído";
+const DOING = "Em Progresso";
 const TODO = "Não Iniciado";
+
+const STEP_STATUSES = [TODO, DOING, DONE];
+
+const statusStyles: Record<string, string> = {
+  [TODO]: "bg-muted text-muted-foreground",
+  [DOING]: "bg-primary/15 text-primary",
+  [DONE]: "bg-success/15 text-success",
+};
 
 const parseDbDate = (dateStr: string): Date => {
   if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -60,26 +79,15 @@ const formatDateDb = (date: Date): string => {
   return `${y}-${m}-${d}`;
 };
 
-interface NewStepDraft {
-  title: string;
-  description: string;
-  due_date: string | null;
-  google_docs_link: string;
-  canva_link: string;
-}
-
-const emptyDraft: NewStepDraft = {
-  title: "",
-  description: "",
-  due_date: null,
-  google_docs_link: "",
-  canva_link: "",
+const isOverdue = (dateStr: string) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return parseDbDate(dateStr).getTime() < today.getTime();
 };
 
 export default function EditableStepsChecklist({ taskId, steps, onStepsChange }: Props) {
   const { toast } = useToast();
-  const [draft, setDraft] = useState<NewStepDraft>(emptyDraft);
-  const [newDateOpen, setNewDateOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [showNewInput, setShowNewInput] = useState(false);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
@@ -110,9 +118,6 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
     }
   };
 
-  const toggle = (step: EditableStep) =>
-    updateStepField(step, { status: step.status === DONE ? TODO : DONE });
-
   const saveTitle = async (step: EditableStep) => {
     const title = editDraft.trim();
     if (!title || title === step.title) {
@@ -139,7 +144,7 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
   };
 
   const addStep = async () => {
-    const title = draft.title.trim();
+    const title = newTitle.trim();
     if (!title) return;
     setIsAddingNew(true);
     try {
@@ -151,10 +156,6 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
           title,
           status: TODO,
           order_index: nextIndex,
-          description: draft.description.trim() || null,
-          due_date: draft.due_date,
-          google_docs_link: draft.google_docs_link.trim() || null,
-          canva_link: draft.canva_link.trim() || null,
         })
         .select()
         .single();
@@ -172,8 +173,8 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
           canva_link: data.canva_link,
         },
       ]);
-      setDraft(emptyDraft);
-      setShowNewInput(false);
+      setNewTitle("");
+      setExpandedId(data.id);
     } catch (err) {
       logError("add step", err);
       toast({ variant: "destructive", title: "Erro ao criar etapa" });
@@ -181,7 +182,6 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
       setIsAddingNew(false);
     }
   };
-
 
   const handleEditKey = (e: KeyboardEvent<HTMLInputElement>, step: EditableStep) => {
     if (e.key === "Enter") {
@@ -204,7 +204,7 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="space-y-2">
         {sorted.length === 0 && !showNewInput && (
           <p className="text-sm text-muted-foreground">Nenhuma etapa ainda.</p>
         )}
@@ -214,55 +214,111 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
           const isEditing = editingTitleId === step.id;
           const isExpanded = expandedId === step.id;
           return (
-            <div key={step.id} className="rounded-md border border-transparent hover:border-border transition-colors">
-              <div className="group flex items-center gap-2 px-2 py-1.5">
+            <div key={step.id} className="rounded-md border">
+              <div className="group flex items-start gap-2 px-2 py-2 min-w-0">
                 <button
                   type="button"
                   onClick={() => setExpandedId(isExpanded ? null : step.id)}
-                  className="text-muted-foreground hover:text-foreground shrink-0"
+                  className="text-muted-foreground hover:text-foreground shrink-0 mt-1"
                   aria-label={isExpanded ? "Recolher etapa" : "Expandir etapa"}
                 >
                   <ChevronRight className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-90")} />
                 </button>
-                <Checkbox
-                  checked={isDone}
-                  onCheckedChange={() => toggle(step)}
-                  aria-label={`Marcar etapa ${step.title}`}
-                />
-                {isEditing ? (
-                  <Input
-                    autoFocus
-                    value={editDraft}
-                    onChange={(e) => setEditDraft(e.target.value)}
-                    onBlur={() => saveTitle(step)}
-                    onKeyDown={(e) => handleEditKey(e, step)}
-                    disabled={savingId === step.id}
-                    className="h-8 flex-1"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingTitleId(step.id);
-                      setEditDraft(step.title);
-                    }}
-                    className={cn(
-                      "flex-1 text-left text-sm break-words [overflow-wrap:anywhere] cursor-text",
-                      isDone && "line-through text-muted-foreground",
-                    )}
+
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  {isEditing ? (
+                    <Input
+                      autoFocus
+                      value={editDraft}
+                      onChange={(e) => setEditDraft(e.target.value)}
+                      onBlur={() => saveTitle(step)}
+                      onKeyDown={(e) => handleEditKey(e, step)}
+                      disabled={savingId === step.id}
+                      className="h-8"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingTitleId(step.id);
+                        setEditDraft(step.title);
+                      }}
+                      className={cn(
+                        "w-full text-left text-sm font-medium break-words [overflow-wrap:anywhere] cursor-text",
+                        isDone && "line-through text-muted-foreground",
+                      )}
+                    >
+                      {step.title}
+                    </button>
+                  )}
+
+                  {/* Resumo das informações da etapa */}
+                  {!isExpanded && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {step.due_date && (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "gap-1 font-normal",
+                            !isDone && isOverdue(step.due_date) && "border-destructive text-destructive",
+                          )}
+                        >
+                          <CalendarIcon className="w-3 h-3" />
+                          {format(parseDbDate(step.due_date), "dd MMM yyyy", { locale: ptBR })}
+                        </Badge>
+                      )}
+                      {step.google_docs_link && (
+                        <Badge variant="outline" className="gap-1 font-normal">
+                          <FileText className="w-3 h-3" /> Trabalho escrito
+                        </Badge>
+                      )}
+                      {step.canva_link && (
+                        <Badge variant="outline" className="gap-1 font-normal">
+                          <Presentation className="w-3 h-3" /> Apresentação
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  {!isExpanded && step.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 break-words [overflow-wrap:anywhere] flex items-start gap-1">
+                      <AlignLeft className="w-3 h-3 mt-0.5 shrink-0" />
+                      {step.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <Select
+                    value={STEP_STATUSES.includes(step.status) ? step.status : TODO}
+                    onValueChange={(value) => updateStepField(step, { status: value })}
                   >
-                    {step.title}
-                  </button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                  onClick={() => remove(step)}
-                  aria-label="Excluir etapa"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                    <SelectTrigger
+                      className={cn(
+                        "h-7 w-[140px] text-xs border-0",
+                        statusStyles[step.status] ?? statusStyles[TODO],
+                      )}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STEP_STATUSES.map((s) => (
+                        <SelectItem key={s} value={s} className="text-xs">
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                    onClick={() => remove(step)}
+                    aria-label="Excluir etapa"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
 
               {isExpanded && (
@@ -364,118 +420,39 @@ export default function EditableStepsChecklist({ taskId, steps, onStepsChange }:
 
         <div className="pt-2">
           {showNewInput ? (
-            <div className="rounded-md border p-3 space-y-3">
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Nome da etapa</Label>
-                <Input
-                  autoFocus
-                  placeholder="Nome da etapa..."
-                  value={draft.title}
-                  onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addStep();
-                    } else if (e.key === "Escape") {
-                      setShowNewInput(false);
-                      setDraft(emptyDraft);
-                    }
-                  }}
-                  disabled={isAddingNew}
-                  className="h-9"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Descrição</Label>
-                <Textarea
-                  rows={3}
-                  placeholder="Adicione uma descrição..."
-                  value={draft.description}
-                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Data de entrega</Label>
-                <Popover open={newDateOpen} onOpenChange={setNewDateOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-full justify-start font-normal">
-                      <CalendarIcon className="w-4 h-4 mr-2" />
-                      {draft.due_date
-                        ? format(parseDbDate(draft.due_date), "dd 'de' MMM 'de' yyyy", { locale: ptBR })
-                        : "Sem data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarPicker
-                      mode="single"
-                      selected={draft.due_date ? parseDbDate(draft.due_date) : undefined}
-                      onSelect={(date) => {
-                        setDraft({ ...draft, due_date: date ? formatDateDb(date) : null });
-                        setNewDateOpen(false);
-                      }}
-                      locale={ptBR}
-                      initialFocus
-                    />
-                    {draft.due_date && (
-                      <div className="p-2 border-t">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => {
-                            setDraft({ ...draft, due_date: null });
-                            setNewDateOpen(false);
-                          }}
-                        >
-                          Remover data
-                        </Button>
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                  <LinkIconLucide className="w-3 h-3" /> Trabalho escrito
-                </Label>
-                <Input
-                  placeholder="https://..."
-                  value={draft.google_docs_link}
-                  onChange={(e) => setDraft({ ...draft, google_docs_link: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                  <LinkIconLucide className="w-3 h-3" /> Apresentação
-                </Label>
-                <Input
-                  placeholder="https://..."
-                  value={draft.canva_link}
-                  onChange={(e) => setDraft({ ...draft, canva_link: e.target.value })}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
+            <div className="flex items-center gap-2">
+              <Input
+                autoFocus
+                placeholder="Nome da etapa..."
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addStep();
+                  } else if (e.key === "Escape") {
                     setShowNewInput(false);
-                    setDraft(emptyDraft);
-                  }}
-                  disabled={isAddingNew}
-                >
-                  Cancelar
-                </Button>
-                <Button size="sm" onClick={addStep} disabled={isAddingNew || !draft.title.trim()}>
-                  {isAddingNew && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Criar etapa
-                </Button>
-              </div>
+                    setNewTitle("");
+                  }
+                }}
+                disabled={isAddingNew}
+                className="h-9"
+              />
+              <Button size="sm" onClick={addStep} disabled={isAddingNew || !newTitle.trim()}>
+                {isAddingNew && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Criar
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowNewInput(false);
+                  setNewTitle("");
+                }}
+                disabled={isAddingNew}
+              >
+                Cancelar
+              </Button>
             </div>
           ) : (
             <Button
