@@ -26,6 +26,9 @@ interface SwipeableTaskCardProps {
   checklist?: { text: string; completed: boolean }[];
   availableStatuses?: string[];
   completedStatusName?: string;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
   onDelete: (id: string) => void;
   onStatusChange?: (id: string, newStatus: string) => void;
   onArchive?: (id: string) => void;
@@ -43,6 +46,9 @@ const SwipeableTaskCard = ({
   checklist = [],
   availableStatuses = [],
   completedStatusName = "Concluído",
+  selectionMode = false,
+  selected = false,
+  onToggleSelect,
   onDelete,
   onStatusChange,
   onArchive,
@@ -86,7 +92,7 @@ const SwipeableTaskCard = ({
   };
 
   // On desktop, just render the normal TaskCard
-  if (!isMobile) {
+  if (!isMobile || selectionMode) {
     return (
       <TaskCard
         id={id}
@@ -97,6 +103,9 @@ const SwipeableTaskCard = ({
         status={status}
         checklist={checklist}
         availableStatuses={availableStatuses}
+        selectionMode={selectionMode}
+        selected={selected}
+        onToggleSelect={onToggleSelect}
         onDelete={onDelete}
         onStatusChange={onStatusChange}
         onArchive={onArchive}
@@ -159,6 +168,9 @@ const SwipeableTaskCard = ({
               status={status}
               checklist={checklist}
               availableStatuses={availableStatuses}
+              selectionMode={selectionMode}
+              selected={selected}
+              onToggleSelect={onToggleSelect}
               onDelete={onDelete}
               onStatusChange={onStatusChange}
               onArchive={onArchive}
