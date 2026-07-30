@@ -40,6 +40,9 @@ interface TaskCardProps {
   checklist?: { text: string; completed: boolean }[];
   availableStatuses?: string[];
   assignees?: TaskCardAssignee[];
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
   onDelete: (id: string) => void;
   onStatusChange?: (id: string, newStatus: string) => void;
   onArchive?: (id: string) => void;
@@ -55,6 +58,9 @@ const TaskCard = ({
   checklist = [],
   availableStatuses = [],
   assignees = [],
+  selectionMode = false,
+  selected = false,
+  onToggleSelect,
   onDelete,
   onStatusChange,
   onArchive,
