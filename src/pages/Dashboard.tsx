@@ -131,7 +131,18 @@ const Dashboard = () => {
 
 
         {/* Modo de seleção múltipla */}
-        <div className="mb-3 flex justify-end">
+        <div className="mb-3 flex flex-wrap justify-end gap-2">
+          {selection.selectionMode && selection.selectedCount === 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+              onClick={() => selection.selectAll(filteredTasks.map((t) => t.id))}
+            >
+              <CheckSquare className="h-4 w-4" />
+              Selecionar todas
+            </Button>
+          )}
           <Button
             variant={selection.selectionMode ? "secondary" : "outline"}
             size="sm"
