@@ -140,8 +140,10 @@ export function KanbanCard({
                 className="mt-1 cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 aria-label="Arrastar tarefa"
               >
-              <GripVertical className="w-4 h-4" />
-            </button>
+                <GripVertical className="w-4 h-4" />
+              </button>
+            )}
+
 
             <div className="flex-1 min-w-0">
               <div className="flex items-start gap-2 mb-1 flex-wrap">
