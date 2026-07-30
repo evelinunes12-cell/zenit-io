@@ -112,8 +112,10 @@ export function KanbanCard({
       className={cn(
         "hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden",
         isCurrentlyDragging && "opacity-50 scale-95",
-        isOverdue && "border-destructive/50 shadow-destructive/10"
+        isOverdue && "border-destructive/50 shadow-destructive/10",
+        selectionMode && selected && "ring-2 ring-primary border-primary"
       )}
+      onClick={selectionMode ? () => onToggleSelect?.(task.id) : undefined}
     >
       {isOverdue && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-destructive animate-pulse" />
@@ -123,12 +125,21 @@ export function KanbanCard({
         <div className="flex items-start justify-between gap-2 mb-3">
           {/* Drag handle + content */}
           <div className="flex items-start gap-2 flex-1 min-w-0">
-            <button
-              {...attributes}
-              {...listeners}
-              className="mt-1 cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground transition-colors shrink-0"
-              aria-label="Arrastar tarefa"
-            >
+            {selectionMode ? (
+              <Checkbox
+                checked={selected}
+                onCheckedChange={() => onToggleSelect?.(task.id)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Selecionar tarefa"
+                className="mt-1.5 shrink-0"
+              />
+            ) : (
+              <button
+                {...attributes}
+                {...listeners}
+                className="mt-1 cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                aria-label="Arrastar tarefa"
+              >
               <GripVertical className="w-4 h-4" />
             </button>
 
