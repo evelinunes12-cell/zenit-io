@@ -118,14 +118,25 @@ const TaskCard = ({
     <Card 
       className={cn(
         "hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden",
-        isOverdue && "border-destructive/50 shadow-destructive/10"
+        isOverdue && "border-destructive/50 shadow-destructive/10",
+        selectionMode && selected && "ring-2 ring-primary border-primary"
       )}
+      onClick={selectionMode ? () => onToggleSelect?.(id) : undefined}
     >
       {isOverdue && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-destructive animate-pulse" />
       )}
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-2 mb-3">
+          {selectionMode && (
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => onToggleSelect?.(id)}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Selecionar tarefa"
+              className="mt-1.5 shrink-0"
+            />
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-start gap-2 mb-1 flex-wrap">
               <h3 className="font-semibold text-lg text-foreground break-words">{subjectName}</h3>
