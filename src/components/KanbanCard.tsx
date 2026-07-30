@@ -39,6 +39,9 @@ interface KanbanCardProps {
   task: Task;
   availableStatuses: string[];
   completedStatusName: string;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (taskId: string) => void;
   onDelete: (taskId: string) => void;
   onStatusChange: (taskId: string, newStatus: string) => void;
   onArchive: (taskId: string) => void;
@@ -48,6 +51,9 @@ interface KanbanCardProps {
 
 export function KanbanCard({
   task,
+  selectionMode = false,
+  selected = false,
+  onToggleSelect,
   onDelete,
   onArchive,
   onTaskClick,
