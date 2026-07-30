@@ -22,6 +22,11 @@ import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { TodaySummary } from "@/components/dashboard/TodaySummary";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardKanban } from "@/components/dashboard/DashboardKanban";
+import { BulkActionsBar } from "@/components/dashboard/BulkActionsBar";
+import { useTaskSelection } from "@/hooks/useTaskSelection";
+import { useBulkTaskActions } from "@/hooks/useBulkTaskActions";
+import { Button } from "@/components/ui/button";
+import { CheckSquare, X } from "lucide-react";
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -50,6 +55,9 @@ const Dashboard = () => {
   const { handleDeleteTask, handleStatusChange, handleArchiveTask } = useDashboardMutations();
 
   useDashboardNotifications(tasks);
+
+  const selection = useTaskSelection();
+  const { bulkUpdateStatus, bulkArchive, bulkDelete, isProcessing } = useBulkTaskActions();
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -122,6 +130,28 @@ const Dashboard = () => {
 
 
 
+        {/* Modo de seleção múltipla */}
+        <div className="mb-3 flex justify-end">
+          <Button
+            variant={selection.selectionMode ? "secondary" : "outline"}
+            size="sm"
+            className="gap-2"
+            onClick={selection.toggleSelectionMode}
+          >
+            {selection.selectionMode ? (
+              <>
+                <X className="h-4 w-4" />
+                Sair da seleção
+              </>
+            ) : (
+              <>
+                <CheckSquare className="h-4 w-4" />
+                Selecionar tarefas
+              </>
+            )}
+          </Button>
+        </div>
+
         {/* Filters */}
         <DashboardFilters
           searchQuery={searchQuery}
@@ -160,8 +190,33 @@ const Dashboard = () => {
           onDelete={(id) => handleDeleteTask(id, tasks)}
           onArchive={handleArchiveTask}
           clearAllFilters={clearAllFilters}
+          selectionMode={selection.selectionMode}
+          isSelected={selection.isSelected}
+          onToggleSelect={selection.toggleTask}
         />
       </main>
+
+      <BulkActionsBar
+        selectedCount={selection.selectedCount}
+        totalCount={filteredTasks.length}
+        availableStatuses={availableStatuses}
+        isProcessing={isProcessing}
+        onSelectAll={() => selection.selectAll(filteredTasks.map((t) => t.id))}
+        onClearSelection={selection.clearSelection}
+        onExitSelectionMode={selection.exitSelectionMode}
+        onChangeStatus={async (status) => {
+          const ok = await bulkUpdateStatus(selection.selectedIds, status);
+          if (ok) selection.clearSelection();
+        }}
+        onArchive={async () => {
+          const ok = await bulkArchive(selection.selectedIds);
+          if (ok) selection.clearSelection();
+        }}
+        onDelete={async () => {
+          const ok = await bulkDelete(selection.selectedIds);
+          if (ok) selection.clearSelection();
+        }}
+      />
     </div>
   );
 };
