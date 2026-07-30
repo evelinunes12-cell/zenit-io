@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Calendar, Users, GripVertical, Eye, Archive, Trash2,
   CheckSquare, AlertTriangle, MoreVertical,
@@ -38,6 +39,9 @@ interface KanbanCardProps {
   task: Task;
   availableStatuses: string[];
   completedStatusName: string;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (taskId: string) => void;
   onDelete: (taskId: string) => void;
   onStatusChange: (taskId: string, newStatus: string) => void;
   onArchive: (taskId: string) => void;
@@ -47,6 +51,9 @@ interface KanbanCardProps {
 
 export function KanbanCard({
   task,
+  selectionMode = false,
+  selected = false,
+  onToggleSelect,
   onDelete,
   onArchive,
   onTaskClick,
@@ -105,8 +112,10 @@ export function KanbanCard({
       className={cn(
         "hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden",
         isCurrentlyDragging && "opacity-50 scale-95",
-        isOverdue && "border-destructive/50 shadow-destructive/10"
+        isOverdue && "border-destructive/50 shadow-destructive/10",
+        selectionMode && selected && "ring-2 ring-primary border-primary"
       )}
+      onClick={selectionMode ? () => onToggleSelect?.(task.id) : undefined}
     >
       {isOverdue && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-destructive animate-pulse" />
@@ -116,14 +125,25 @@ export function KanbanCard({
         <div className="flex items-start justify-between gap-2 mb-3">
           {/* Drag handle + content */}
           <div className="flex items-start gap-2 flex-1 min-w-0">
-            <button
-              {...attributes}
-              {...listeners}
-              className="mt-1 cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground transition-colors shrink-0"
-              aria-label="Arrastar tarefa"
-            >
-              <GripVertical className="w-4 h-4" />
-            </button>
+            {selectionMode ? (
+              <Checkbox
+                checked={selected}
+                onCheckedChange={() => onToggleSelect?.(task.id)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Selecionar tarefa"
+                className="mt-1.5 shrink-0"
+              />
+            ) : (
+              <button
+                {...attributes}
+                {...listeners}
+                className="mt-1 cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                aria-label="Arrastar tarefa"
+              >
+                <GripVertical className="w-4 h-4" />
+              </button>
+            )}
+
 
             <div className="flex-1 min-w-0">
               <div className="flex items-start gap-2 mb-1 flex-wrap">

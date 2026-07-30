@@ -18,6 +18,9 @@ interface KanbanColumnProps {
   onArchive: (taskId: string) => void;
   onTaskClick?: (taskId: string) => void;
   flexible?: boolean;
+  selectionMode?: boolean;
+  isSelected?: (taskId: string) => boolean;
+  onToggleSelect?: (taskId: string) => void;
 }
 
 export function KanbanColumn({
@@ -33,6 +36,9 @@ export function KanbanColumn({
   onArchive,
   onTaskClick,
   flexible = false,
+  selectionMode = false,
+  isSelected,
+  onToggleSelect,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -73,6 +79,9 @@ export function KanbanColumn({
               onStatusChange={onStatusChange}
               onArchive={onArchive}
               onTaskClick={onTaskClick}
+              selectionMode={selectionMode}
+              selected={isSelected?.(task.id) || false}
+              onToggleSelect={onToggleSelect}
             />
           ))}
           {tasks.length === 0 && (

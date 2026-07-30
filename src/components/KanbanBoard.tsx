@@ -31,6 +31,9 @@ interface KanbanBoardProps {
   onStatusChange: (taskId: string, newStatus: string) => void;
   onDelete: (taskId: string) => void;
   onArchive: (taskId: string) => void;
+  selectionMode?: boolean;
+  isSelected?: (taskId: string) => boolean;
+  onToggleSelect?: (taskId: string) => void;
 }
 
 export function KanbanBoard({
@@ -40,6 +43,9 @@ export function KanbanBoard({
   onStatusChange,
   onDelete,
   onArchive,
+  selectionMode = false,
+  isSelected,
+  onToggleSelect,
 }: KanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [quickViewTaskId, setQuickViewTaskId] = useState<string | null>(null);
@@ -172,6 +178,9 @@ export function KanbanBoard({
                 onArchive={onArchive}
                 onTaskClick={handleTaskClick}
                 flexible={isFlatLayout}
+                selectionMode={selectionMode}
+                isSelected={isSelected}
+                onToggleSelect={onToggleSelect}
               />
             ))}
           </div>
