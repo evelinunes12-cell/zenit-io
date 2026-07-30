@@ -15,6 +15,9 @@ interface DashboardKanbanProps {
   onDelete: (id: string) => void;
   onArchive: (taskId: string) => void;
   clearAllFilters: () => void;
+  selectionMode?: boolean;
+  isSelected?: (taskId: string) => boolean;
+  onToggleSelect?: (taskId: string) => void;
 }
 
 export function DashboardKanban({
@@ -28,6 +31,9 @@ export function DashboardKanban({
   onDelete,
   onArchive,
   clearAllFilters,
+  selectionMode = false,
+  isSelected,
+  onToggleSelect,
 }: DashboardKanbanProps) {
   const completedStatusName = availableStatuses.find(s => s.toLowerCase().includes("conclu")) || "Concluído";
 
@@ -58,6 +64,9 @@ export function DashboardKanban({
             checklist={task.checklist}
             availableStatuses={availableStatuses}
             completedStatusName={completedStatusName}
+            selectionMode={selectionMode}
+            selected={isSelected?.(task.id) || false}
+            onToggleSelect={onToggleSelect}
             onDelete={onDelete}
             onStatusChange={onStatusChange}
             onArchive={onArchive}
@@ -75,6 +84,9 @@ export function DashboardKanban({
       onStatusChange={onStatusChange}
       onDelete={onDelete}
       onArchive={onArchive}
+      selectionMode={selectionMode}
+      isSelected={isSelected}
+      onToggleSelect={onToggleSelect}
     />
   );
 }
