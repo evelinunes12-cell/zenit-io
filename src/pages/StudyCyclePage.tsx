@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchSubjects, Subject } from "@/services/subjects";
+import { fetchActiveSubjects, Subject } from "@/services/subjects";
 import {
   fetchStudyCycles,
   createStudyCycle,
@@ -54,8 +54,8 @@ const StudyCyclePage = () => {
   });
 
   const { data: subjects = [], isLoading: loadingSubjects } = useQuery({
-    queryKey: ["subjects", user?.id],
-    queryFn: fetchSubjects,
+    queryKey: ["subjects-active", user?.id],
+    queryFn: fetchActiveSubjects,
     enabled: !!user,
   });
 

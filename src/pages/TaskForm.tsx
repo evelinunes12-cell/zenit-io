@@ -153,6 +153,7 @@ const TaskForm = () => {
       const { data, error } = await supabase
         .from("subjects")
         .select("name")
+        .eq("is_active", true)
         .order("name");
 
       if (error) throw error;

@@ -24,7 +24,7 @@ import {
   PlannerNote,
   PlannerGoal,
 } from "@/services/planner";
-import { fetchSubjects } from "@/services/subjects";
+import { fetchActiveSubjects } from "@/services/subjects";
 import { fetchStudySchedules, StudySchedule } from "@/services/studySchedules";
 import { fetchTasks, Task } from "@/services/tasks";
 import { NoteDialog } from "@/components/planner/NoteDialog";
@@ -89,8 +89,8 @@ const Planner = () => {
   }
 
   const { data: subjects = [] } = useQuery({
-    queryKey: ["subjects"],
-    queryFn: fetchSubjects,
+    queryKey: ["subjects-active"],
+    queryFn: fetchActiveSubjects,
     enabled: !!user,
   });
 

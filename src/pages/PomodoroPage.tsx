@@ -9,7 +9,7 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { fetchSubjects } from "@/services/subjects";
+import { fetchActiveSubjects } from "@/services/subjects";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -40,8 +40,8 @@ const PomodoroPage = () => {
   const [draftSettings, setDraftSettings] = useState<PomodoroSettings>(settings);
 
   const { data: subjects = [] } = useQuery({
-    queryKey: ["subjects", user?.id],
-    queryFn: fetchSubjects,
+    queryKey: ["subjects-active", user?.id],
+    queryFn: fetchActiveSubjects,
     enabled: !!user,
   });
 
