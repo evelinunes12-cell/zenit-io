@@ -29,6 +29,20 @@ export const fetchSubjects = async () => {
   return data as Subject[];
 };
 
+/** Apenas disciplinas ativas — usar em criação de tarefas, ciclos, metas e anotações. */
+export const fetchActiveSubjects = async () => {
+  const { data, error } = await supabase
+    .from("subjects")
+    .select("*")
+    .eq("is_active", true)
+    .order("name");
+
+  if (error) throw error;
+  return data as Subject[];
+};
+
+
+
 export const fetchSubjectNames = async () => {
   const { data, error } = await supabase
     .from("subjects")
