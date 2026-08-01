@@ -1,0 +1,1 @@
+SELECT public.auto_archive_tasks();
