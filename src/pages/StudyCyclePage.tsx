@@ -62,7 +62,7 @@ const StudyCyclePage = () => {
   const loading = loadingCycles || loadingSubjects;
 
   const reloadCycles = () => queryClient.invalidateQueries({ queryKey: ["study-cycles", user?.id] });
-  const reloadSubjects = () => queryClient.invalidateQueries({ queryKey: ["subjects", user?.id] });
+  const reloadSubjects = () => queryClient.invalidateQueries({ queryKey: ["subjects-active", user?.id] });
 
   const handleSave = async (name: string, blocks: NewBlock[], advancedMeta?: AdvancedCycleMetadata) => {
     if (!user) return;
