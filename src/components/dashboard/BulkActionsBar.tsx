@@ -30,6 +30,7 @@ interface BulkActionsBarProps {
   onChangeStatus: (status: string) => void;
   onArchive: () => void;
   onDuplicate: () => void;
+  onDelete: () => void;
 }
 
 export function BulkActionsBar({
@@ -42,6 +43,7 @@ export function BulkActionsBar({
   onExitSelectionMode,
   onChangeStatus,
   onArchive,
+  onDuplicate,
   onDelete,
 }: BulkActionsBarProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
