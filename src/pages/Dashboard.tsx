@@ -57,7 +57,7 @@ const Dashboard = () => {
   useDashboardNotifications(tasks);
 
   const selection = useTaskSelection();
-  const { bulkUpdateStatus, bulkArchive, bulkDelete, isProcessing } = useBulkTaskActions();
+  const { bulkUpdateStatus, bulkArchive, bulkDelete, bulkDuplicate, isProcessing } = useBulkTaskActions();
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -222,6 +222,20 @@ const Dashboard = () => {
         onArchive={async () => {
           const ok = await bulkArchive(selection.selectedIds);
           if (ok) selection.clearSelection();
+        }}
+        onDuplicate={async () => {
+          const todoStatus =
+            availableStatuses.find((s) => s.toLowerCase().includes("fazer")) || "A fazer";
+          const newIds = await bulkDuplicate(selection.selectedIds, todoStatus);
+          if (newIds && newIds.length > 0) {
+            selection.clearSelection();
+            toast.success(newIds.length === 1 ? "Tarefa duplicada." : `${newIds.length} tarefas duplicadas.`, {
+              action: {
+                label: "Abrir",
+                onClick: () => navigate(`/task/${newIds[0]}`),
+              },
+            });
+          }
         }}
         onDelete={async () => {
           const ok = await bulkDelete(selection.selectedIds);
