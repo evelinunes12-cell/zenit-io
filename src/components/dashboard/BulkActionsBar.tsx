@@ -29,7 +29,7 @@ interface BulkActionsBarProps {
   onExitSelectionMode: () => void;
   onChangeStatus: (status: string) => void;
   onArchive: () => void;
-  onDelete: () => void;
+  onDuplicate: () => void;
 }
 
 export function BulkActionsBar({
