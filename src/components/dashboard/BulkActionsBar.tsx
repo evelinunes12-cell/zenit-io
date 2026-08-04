@@ -111,6 +111,19 @@ export function BulkActionsBar({
             <Button
               variant="outline"
               size="sm"
+              className="gap-1"
+              onClick={onDuplicate}
+              disabled={isProcessing}
+            >
+              <Copy className="h-4 w-4" />
+              Duplicar
+            </Button>
+
+
+
+            <Button
+              variant="outline"
+              size="sm"
               className="gap-1 text-destructive hover:text-destructive"
               onClick={() => setConfirmDelete(true)}
               disabled={isProcessing}
