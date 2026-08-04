@@ -106,5 +106,145 @@ export const useBulkTaskActions = () => {
     [queryClient, user?.id, invalidate]
   );
 
-  return { bulkUpdateStatus, bulkArchive, bulkDelete, isProcessing };
+  /**
+   * Duplica tarefas selecionadas copiando dados gerais, links, anexos por link e etapas.
+   * As cópias sempre nascem com o status "a fazer".
+   */
+  const bulkDuplicate = useCallback(
+    async (taskIds: string[], todoStatus: string) => {
+      if (taskIds.length === 0 || !user?.id) return null;
+      setIsProcessing(true);
+
+      try {
+        const { data: sourceTasks, error: fetchError } = await supabase
+          .from("tasks")
+          .select("*")
+          .in("id", taskIds);
+        if (fetchError) throw fetchError;
+        if (!sourceTasks || sourceTasks.length === 0) return null;
+
+        const { data: createdTasks, error: insertError } = await supabase
+          .from("tasks")
+          .insert(
+            sourceTasks.map((task) => ({
+              user_id: user.id,
+              subject_name: `${task.subject_name} (cópia)`,
+              description: task.description,
+              due_date: task.due_date,
+              is_group_work: task.is_group_work,
+              group_members: task.group_members,
+              google_docs_link: task.google_docs_link,
+              canva_link: task.canva_link,
+              checklist: task.checklist,
+              environment_id: task.environment_id,
+              status: todoStatus,
+              is_archived: false,
+            }))
+          )
+          .select("id");
+        if (insertError) throw insertError;
+
+        // Mapeia tarefa original -> cópia (mesma ordem do insert)
+        const idMap = new Map<string, string>();
+        sourceTasks.forEach((task, index) => {
+          const created = createdTasks?.[index];
+          if (created) idMap.set(task.id, created.id);
+        });
+
+        // Copia apenas anexos por link (arquivos no storage não são duplicados)
+        const { data: linkAttachments } = await supabase
+          .from("task_attachments")
+          .select("*")
+          .in("task_id", taskIds)
+          .eq("is_link", true);
+
+        if (linkAttachments?.length) {
+          const rows = linkAttachments
+            .filter((att) => idMap.has(att.task_id))
+            .map((att) => ({
+              task_id: idMap.get(att.task_id)!,
+              file_name: att.file_name,
+              file_path: att.file_path,
+              file_size: att.file_size,
+              file_type: att.file_type,
+              is_link: true,
+            }));
+          if (rows.length) await supabase.from("task_attachments").insert(rows);
+        }
+
+        // Copia etapas e seus anexos por link
+        const { data: steps } = await supabase
+          .from("task_steps")
+          .select("*")
+          .in("task_id", taskIds)
+          .order("order_index", { ascending: true });
+
+        if (steps?.length) {
+          const stepRows = steps
+            .filter((step) => idMap.has(step.task_id))
+            .map((step) => ({
+              task_id: idMap.get(step.task_id)!,
+              title: step.title,
+              description: step.description,
+              due_date: step.due_date,
+              status: "Não Iniciado",
+              google_docs_link: step.google_docs_link,
+              canva_link: step.canva_link,
+              order_index: step.order_index,
+              checklist: step.checklist,
+            }));
+
+          if (stepRows.length) {
+            const { data: createdSteps } = await supabase
+              .from("task_steps")
+              .insert(stepRows)
+              .select("id");
+
+            const stepIdMap = new Map<string, string>();
+            steps
+              .filter((step) => idMap.has(step.task_id))
+              .forEach((step, index) => {
+                const created = createdSteps?.[index];
+                if (created) stepIdMap.set(step.id, created.id);
+              });
+
+            const originalStepIds = Array.from(stepIdMap.keys());
+            if (originalStepIds.length) {
+              const { data: stepLinks } = await supabase
+                .from("task_step_attachments")
+                .select("*")
+                .in("task_step_id", originalStepIds)
+                .eq("is_link", true);
+
+              if (stepLinks?.length) {
+                const rows = stepLinks
+                  .filter((att) => stepIdMap.has(att.task_step_id))
+                  .map((att) => ({
+                    task_step_id: stepIdMap.get(att.task_step_id)!,
+                    file_name: att.file_name,
+                    file_path: att.file_path,
+                    file_size: att.file_size,
+                    file_type: att.file_type,
+                    is_link: true,
+                  }));
+                if (rows.length) await supabase.from("task_step_attachments").insert(rows);
+              }
+            }
+          }
+        }
+
+        return createdTasks?.map((task) => task.id) ?? [];
+      } catch (error) {
+        logError("Error bulk duplicating tasks", error);
+        toast.error("Erro ao duplicar tarefas", { duration: 5000 });
+        return null;
+      } finally {
+        setIsProcessing(false);
+        invalidate();
+      }
+    },
+    [user?.id, invalidate]
+  );
+
+  return { bulkUpdateStatus, bulkArchive, bulkDelete, bulkDuplicate, isProcessing };
 };

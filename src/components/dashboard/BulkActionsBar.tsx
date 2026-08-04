@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Archive, Trash2, X, CheckCheck, ChevronUp, Loader2 } from "lucide-react";
+import { Archive, Trash2, X, CheckCheck, ChevronUp, Loader2, Copy } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
