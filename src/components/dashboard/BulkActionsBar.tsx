@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Archive, Trash2, X, CheckCheck, ChevronUp, Loader2 } from "lucide-react";
+import { Archive, Trash2, X, CheckCheck, ChevronUp, Loader2, Copy } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +29,7 @@ interface BulkActionsBarProps {
   onExitSelectionMode: () => void;
   onChangeStatus: (status: string) => void;
   onArchive: () => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 }
 
@@ -42,6 +43,7 @@ export function BulkActionsBar({
   onExitSelectionMode,
   onChangeStatus,
   onArchive,
+  onDuplicate,
   onDelete,
 }: BulkActionsBarProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -105,6 +107,19 @@ export function BulkActionsBar({
               <Archive className="h-4 w-4" />
               Arquivar
             </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={onDuplicate}
+              disabled={isProcessing}
+            >
+              <Copy className="h-4 w-4" />
+              Duplicar
+            </Button>
+
+
 
             <Button
               variant="outline"
