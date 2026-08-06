@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Calendar, Users, GripVertical, Eye, Archive, Trash2,
-  CheckSquare, AlertTriangle, MoreVertical,
+  CheckSquare, AlertTriangle, MoreVertical, Copy,
 } from "lucide-react";
 import { format, isPast, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -45,6 +45,7 @@ interface KanbanCardProps {
   onDelete: (taskId: string) => void;
   onStatusChange: (taskId: string, newStatus: string) => void;
   onArchive: (taskId: string) => void;
+  onDuplicate?: (taskId: string) => void;
   onTaskClick?: (taskId: string) => void;
   isDragging?: boolean;
 }
@@ -56,6 +57,7 @@ export function KanbanCard({
   onToggleSelect,
   onDelete,
   onArchive,
+  onDuplicate,
   onTaskClick,
   isDragging = false,
 }: KanbanCardProps) {
@@ -242,6 +244,12 @@ export function KanbanCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-popover">
+            {onDuplicate && (
+              <DropdownMenuItem onClick={() => onDuplicate(task.id)} className="gap-2">
+                <Copy className="w-4 h-4" />
+                Duplicar
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => onArchive(task.id)} className="gap-2">
               <Archive className="w-4 h-4" />
               Arquivar

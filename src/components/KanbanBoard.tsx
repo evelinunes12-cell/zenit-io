@@ -31,6 +31,7 @@ interface KanbanBoardProps {
   onStatusChange: (taskId: string, newStatus: string) => void;
   onDelete: (taskId: string) => void;
   onArchive: (taskId: string) => void;
+  onDuplicate?: (taskId: string) => void;
   selectionMode?: boolean;
   isSelected?: (taskId: string) => boolean;
   onToggleSelect?: (taskId: string) => void;
@@ -43,6 +44,7 @@ export function KanbanBoard({
   onStatusChange,
   onDelete,
   onArchive,
+  onDuplicate,
   selectionMode = false,
   isSelected,
   onToggleSelect,
@@ -176,6 +178,7 @@ export function KanbanBoard({
                 onDelete={onDelete}
                 onStatusChange={onStatusChange}
                 onArchive={onArchive}
+                onDuplicate={onDuplicate}
                 onTaskClick={handleTaskClick}
                 flexible={isFlatLayout}
                 selectionMode={selectionMode}
@@ -197,6 +200,7 @@ export function KanbanBoard({
                 onDelete={onDelete}
                 onStatusChange={onStatusChange}
                 onArchive={onArchive}
+                onDuplicate={onDuplicate}
                 isDragging
               />
             </div>

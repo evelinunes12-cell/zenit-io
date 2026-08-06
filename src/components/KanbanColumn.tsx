@@ -16,6 +16,7 @@ interface KanbanColumnProps {
   onDelete: (taskId: string) => void;
   onStatusChange: (taskId: string, newStatus: string) => void;
   onArchive: (taskId: string) => void;
+  onDuplicate?: (taskId: string) => void;
   onTaskClick?: (taskId: string) => void;
   flexible?: boolean;
   selectionMode?: boolean;
@@ -34,6 +35,7 @@ export function KanbanColumn({
   onDelete,
   onStatusChange,
   onArchive,
+  onDuplicate,
   onTaskClick,
   flexible = false,
   selectionMode = false,
@@ -78,6 +80,7 @@ export function KanbanColumn({
               onDelete={onDelete}
               onStatusChange={onStatusChange}
               onArchive={onArchive}
+              onDuplicate={onDuplicate}
               onTaskClick={onTaskClick}
               selectionMode={selectionMode}
               selected={isSelected?.(task.id) || false}
