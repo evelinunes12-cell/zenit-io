@@ -178,7 +178,6 @@ const SwipeableTaskCard = ({
               onStatusChange={onStatusChange}
               onArchive={onArchive}
               onDuplicate={onDuplicate}
-        onDuplicate={onDuplicate}
             />
           </div>
         </motion.div>

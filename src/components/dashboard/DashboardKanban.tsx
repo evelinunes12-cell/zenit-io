@@ -72,7 +72,6 @@ export function DashboardKanban({
             onDelete={onDelete}
             onStatusChange={onStatusChange}
             onArchive={onArchive}
-      onDuplicate={onDuplicate}
             onDuplicate={onDuplicate}
           />
         ))}
