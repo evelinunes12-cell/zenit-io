@@ -32,6 +32,7 @@ interface SwipeableTaskCardProps {
   onDelete: (id: string) => void;
   onStatusChange?: (id: string, newStatus: string) => void;
   onArchive?: (id: string) => void;
+  onDuplicate?: (id: string) => void;
 }
 
 const SWIPE_THRESHOLD = 100;
@@ -52,6 +53,7 @@ const SwipeableTaskCard = ({
   onDelete,
   onStatusChange,
   onArchive,
+  onDuplicate,
 }: SwipeableTaskCardProps) => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
@@ -109,6 +111,7 @@ const SwipeableTaskCard = ({
         onDelete={onDelete}
         onStatusChange={onStatusChange}
         onArchive={onArchive}
+        onDuplicate={onDuplicate}
       />
     );
   }
@@ -174,6 +177,7 @@ const SwipeableTaskCard = ({
               onDelete={onDelete}
               onStatusChange={onStatusChange}
               onArchive={onArchive}
+              onDuplicate={onDuplicate}
             />
           </div>
         </motion.div>

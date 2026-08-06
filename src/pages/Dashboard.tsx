@@ -100,6 +100,17 @@ const Dashboard = () => {
     );
   }
 
+  const handleDuplicateTask = async (taskId: string) => {
+    const todoStatus =
+      availableStatuses.find((s) => s.toLowerCase().includes("fazer")) || "A fazer";
+    const newIds = await bulkDuplicate([taskId], todoStatus);
+    if (newIds && newIds.length > 0) {
+      toast.success("Tarefa duplicada.", {
+        action: { label: "Abrir", onClick: () => navigate(`/task/${newIds[0]}`) },
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen min-w-0 flex-1 overflow-x-hidden bg-background">
       <StreakKeeper />
@@ -201,6 +212,7 @@ const Dashboard = () => {
           onStatusChange={handleStatusChange}
           onDelete={(id) => handleDeleteTask(id, tasks)}
           onArchive={handleArchiveTask}
+          onDuplicate={handleDuplicateTask}
           clearAllFilters={clearAllFilters}
           selectionMode={selection.selectionMode}
           isSelected={selection.isSelected}

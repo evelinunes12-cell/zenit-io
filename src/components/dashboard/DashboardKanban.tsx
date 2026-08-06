@@ -14,6 +14,7 @@ interface DashboardKanbanProps {
   onStatusChange: (taskId: string, newStatus: string) => void;
   onDelete: (id: string) => void;
   onArchive: (taskId: string) => void;
+  onDuplicate?: (taskId: string) => void;
   clearAllFilters: () => void;
   selectionMode?: boolean;
   isSelected?: (taskId: string) => boolean;
@@ -30,6 +31,7 @@ export function DashboardKanban({
   onStatusChange,
   onDelete,
   onArchive,
+  onDuplicate,
   clearAllFilters,
   selectionMode = false,
   isSelected,
@@ -70,6 +72,7 @@ export function DashboardKanban({
             onDelete={onDelete}
             onStatusChange={onStatusChange}
             onArchive={onArchive}
+            onDuplicate={onDuplicate}
           />
         ))}
       </div>
@@ -84,6 +87,7 @@ export function DashboardKanban({
       onStatusChange={onStatusChange}
       onDelete={onDelete}
       onArchive={onArchive}
+      onDuplicate={onDuplicate}
       selectionMode={selectionMode}
       isSelected={isSelected}
       onToggleSelect={onToggleSelect}
