@@ -1,11 +1,23 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Archive, Trash2, X, CheckCheck, ChevronUp, Loader2, Copy } from "lucide-react";
+import {
+  Archive,
+  Trash2,
+  X,
+  CheckCheck,
+  ChevronUp,
+  Loader2,
+  Copy,
+  MoreVertical,
+  Eraser,
+} from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
