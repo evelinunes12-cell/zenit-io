@@ -6,6 +6,7 @@ import { Task } from "@/services/tasks";
 import { registerActivity } from "@/services/activity";
 import { toast } from "sonner";
 import { logError } from "@/lib/logger";
+import { buildCopyName } from "@/lib/duplicateName";
 
 /**
  * Ações em lote sobre tarefas selecionadas (status, arquivar, excluir).
