@@ -123,26 +123,41 @@ export const useBulkTaskActions = () => {
         if (fetchError) throw fetchError;
         if (!sourceTasks || sourceTasks.length === 0) return null;
 
+        // Nomes já existentes (inclusive arquivados) para evitar duplicidade
+        const { data: existing } = await supabase
+          .from("tasks")
+          .select("subject_name")
+          .eq("user_id", user.id);
+
+        const usedNames = new Set<string>(
+          (existing ?? []).map((task) => task.subject_name.trim().toLowerCase())
+        );
+
         const { data: createdTasks, error: insertError } = await supabase
           .from("tasks")
           .insert(
-            sourceTasks.map((task) => ({
-              user_id: user.id,
-              subject_name: `${task.subject_name} (cópia)`,
-              description: task.description,
-              due_date: task.due_date,
-              is_group_work: task.is_group_work,
-              group_members: task.group_members,
-              google_docs_link: task.google_docs_link,
-              canva_link: task.canva_link,
-              checklist: task.checklist,
-              environment_id: task.environment_id,
-              status: todoStatus,
-              is_archived: false,
-            }))
+            sourceTasks.map((task) => {
+              const newName = buildCopyName(task.subject_name, usedNames);
+              usedNames.add(newName.toLowerCase());
+              return {
+                user_id: user.id,
+                subject_name: newName,
+                description: task.description,
+                due_date: task.due_date,
+                is_group_work: task.is_group_work,
+                group_members: task.group_members,
+                google_docs_link: task.google_docs_link,
+                canva_link: task.canva_link,
+                checklist: task.checklist,
+                environment_id: task.environment_id,
+                status: todoStatus,
+                is_archived: false,
+              };
+            })
           )
           .select("id");
         if (insertError) throw insertError;
+
 
         // Mapeia tarefa original -> cópia (mesma ordem do insert)
         const idMap = new Map<string, string>();
