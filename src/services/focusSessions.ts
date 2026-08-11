@@ -89,7 +89,7 @@ export const fetchFocusSessions = async (
     const { data, error } = await query;
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as FocusSession[];
   } catch (error) {
     logError("Erro ao buscar sessões de foco", error);
     return [];
