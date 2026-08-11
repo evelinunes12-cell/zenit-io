@@ -19,6 +19,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { NotebookPen } from "lucide-react";
+import StudyLogDialog from "@/components/StudyLogDialog";
 
 const motivationalTips = [
   { icon: Flame, text: "Mantenha o foco por 25 minutos e descanse. Seu cérebro agradece!" },
@@ -37,6 +39,7 @@ const PomodoroPage = () => {
   const { user } = useAuth();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
   const [draftSettings, setDraftSettings] = useState<PomodoroSettings>(settings);
 
   const { data: subjects = [] } = useQuery({
