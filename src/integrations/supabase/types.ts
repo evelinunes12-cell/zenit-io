@@ -387,8 +387,10 @@ export type Database = {
           duration_minutes: number
           ended_at: string
           id: string
+          notes: string | null
           questions_correct: number
           questions_total: number
+          source: string | null
           started_at: string
           study_cycle_id: string | null
           subject_id: string | null
@@ -399,8 +401,10 @@ export type Database = {
           duration_minutes?: number
           ended_at?: string
           id?: string
+          notes?: string | null
           questions_correct?: number
           questions_total?: number
+          source?: string | null
           started_at?: string
           study_cycle_id?: string | null
           subject_id?: string | null
@@ -411,8 +415,10 @@ export type Database = {
           duration_minutes?: number
           ended_at?: string
           id?: string
+          notes?: string | null
           questions_correct?: number
           questions_total?: number
+          source?: string | null
           started_at?: string
           study_cycle_id?: string | null
           subject_id?: string | null
