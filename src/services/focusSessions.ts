@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { logError } from "@/lib/logger";
 
+export type StudySessionSource = "pomodoro" | "cycle" | "manual";
+
 export interface FocusSession {
   id: string;
   user_id: string;
@@ -11,6 +13,13 @@ export interface FocusSession {
   subject_id: string | null;
   questions_total?: number;
   questions_correct?: number;
+  notes?: string | null;
+  source?: StudySessionSource | null;
+}
+
+export interface CreateFocusSessionExtras {
+  notes?: string | null;
+  source?: StudySessionSource;
 }
 
 export const createFocusSession = async (
@@ -20,7 +29,8 @@ export const createFocusSession = async (
   subjectId?: string | null,
   studyCycleId?: string | null,
   questionsTotal?: number,
-  questionsCorrect?: number
+  questionsCorrect?: number,
+  extras?: CreateFocusSessionExtras
 ): Promise<FocusSession | null> => {
   if (!userId) return null;
 
@@ -36,6 +46,8 @@ export const createFocusSession = async (
       ...(studyCycleId ? { study_cycle_id: studyCycleId } : {}),
       questions_total: Math.max(0, Math.floor(questionsTotal || 0)),
       questions_correct: Math.max(0, Math.floor(questionsCorrect || 0)),
+      ...(extras?.notes ? { notes: extras.notes } : {}),
+      source: extras?.source || (studyCycleId ? "cycle" : "pomodoro"),
     };
 
     const { data, error } = await supabase
@@ -45,12 +57,13 @@ export const createFocusSession = async (
       .single();
 
     if (error) throw error;
-    return data;
+    return data as FocusSession;
   } catch (error) {
     logError("Erro ao criar sessão de foco", error);
     return null;
   }
 };
+
 
 export const fetchFocusSessions = async (
   userId: string,
@@ -76,7 +89,7 @@ export const fetchFocusSessions = async (
     const { data, error } = await query;
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as FocusSession[];
   } catch (error) {
     logError("Erro ao buscar sessões de foco", error);
     return [];
@@ -98,6 +111,8 @@ export interface UpdateFocusSessionInput {
   questionsTotal?: number;
   questionsCorrect?: number;
   subjectId?: string | null;
+  studyCycleId?: string | null;
+  notes?: string | null;
 }
 
 export const updateFocusSession = async (
@@ -125,6 +140,12 @@ export const updateFocusSession = async (
     }
     if (input.subjectId !== undefined) {
       patch.subject_id = input.subjectId;
+    }
+    if (input.studyCycleId !== undefined) {
+      patch.study_cycle_id = input.studyCycleId;
+    }
+    if (input.notes !== undefined) {
+      patch.notes = input.notes;
     }
 
     const { error } = await supabase

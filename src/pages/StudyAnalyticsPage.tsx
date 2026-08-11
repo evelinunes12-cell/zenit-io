@@ -22,11 +22,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Repeat, Timer, CheckCircle, TrendingUp, BookOpen, Target, Pencil, ListChecks, Trash2, X } from "lucide-react";
+import { Clock, Repeat, Timer, CheckCircle, TrendingUp, BookOpen, Target, Pencil, ListChecks, Trash2, X, Plus, NotebookPen } from "lucide-react";
 import { toast } from "sonner";
 
 import ActiveCycleProgressCard from "@/components/ActiveCycleProgressCard";
 import EditFocusSessionDialog from "@/components/EditFocusSessionDialog";
+import StudyLogDialog from "@/components/StudyLogDialog";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
@@ -44,7 +45,7 @@ const COLORS = [
   "hsl(25, 95%, 55%)", "hsl(280, 60%, 55%)",
 ];
 
-type OriginFilter = "all" | "cycle" | "pomodoro";
+type OriginFilter = "all" | "cycle" | "pomodoro" | "manual";
 const StudyAnalyticsPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -58,6 +59,7 @@ const StudyAnalyticsPage = () => {
   const [editingSession, setEditingSession] = useState<FocusSessionWithDetails | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deletingSession, setDeletingSession] = useState<FocusSessionWithDetails | null>(null);
+  const [logOpen, setLogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const refreshAnalytics = () => {
@@ -104,9 +106,11 @@ const StudyAnalyticsPage = () => {
     let filtered = allSessions;
 
     if (originFilter === "cycle") {
-      filtered = filtered.filter((s) => s.study_cycle_id !== null);
+      filtered = filtered.filter((s) => s.source === "cycle" || (s.study_cycle_id !== null && s.source !== "manual"));
     } else if (originFilter === "pomodoro") {
-      filtered = filtered.filter((s) => s.study_cycle_id === null);
+      filtered = filtered.filter((s) => s.source === "pomodoro");
+    } else if (originFilter === "manual") {
+      filtered = filtered.filter((s) => s.source === "manual");
     }
 
     if (selectedCycleId !== "all" && originFilter !== "pomodoro") {
@@ -192,7 +196,14 @@ const StudyAnalyticsPage = () => {
   const cycleActive = selectedCycleId !== "all";
   const hasActiveFilters = originActive || cycleActive;
   const selectedCycleName = cycles.find((c) => c.id === selectedCycleId)?.name;
-  const originLabel = originFilter === "cycle" ? "Apenas Ciclos" : originFilter === "pomodoro" ? "Apenas Pomodoro" : "";
+  const originLabel =
+    originFilter === "cycle"
+      ? "Apenas Ciclos"
+      : originFilter === "pomodoro"
+      ? "Apenas Pomodoro"
+      : originFilter === "manual"
+      ? "Apenas Registros Manuais"
+      : "";
 
   const clearFilters = () => {
     setOriginFilter("all");
@@ -207,6 +218,10 @@ const StudyAnalyticsPage = () => {
           <TrendingUp className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold text-foreground">Desempenho de Estudos</h1>
         </div>
+        <Button size="sm" className="ml-auto" onClick={() => setLogOpen(true)}>
+          <Plus className="h-4 w-4 mr-1" />
+          Registrar estudo
+        </Button>
       </header>
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
@@ -225,6 +240,7 @@ const StudyAnalyticsPage = () => {
                   <SelectItem value="all">Tudo</SelectItem>
                   <SelectItem value="cycle">Apenas Ciclos</SelectItem>
                   <SelectItem value="pomodoro">Apenas Pomodoro</SelectItem>
+                  <SelectItem value="manual">Apenas Registros Manuais</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -504,9 +520,13 @@ const StudyAnalyticsPage = () => {
               <Card>
                 <CardContent className="p-0">
                   {sessions.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8 text-sm">
-                      Nenhum registro encontrado.
-                    </p>
+                    <div className="text-center py-8 px-4 space-y-3">
+                      <p className="text-muted-foreground text-sm">Nenhum registro encontrado.</p>
+                      <Button variant="outline" size="sm" onClick={() => setLogOpen(true)}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Registrar estudo
+                      </Button>
+                    </div>
                   ) : (
                     <ul className="divide-y divide-border">
                       {sessions.map((s) => {
@@ -537,10 +557,16 @@ const StudyAnalyticsPage = () => {
                                     {s.study_cycle_name}
                                   </span>
                                 )}
-                                {!s.study_cycle_id && (
-                                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                                    Pomodoro
+                                {s.source === "manual" ? (
+                                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground">
+                                    Manual
                                   </span>
+                                ) : (
+                                  !s.study_cycle_id && (
+                                    <span className="text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                                      Pomodoro
+                                    </span>
+                                  )
                                 )}
                               </div>
                               <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
@@ -560,6 +586,12 @@ const StudyAnalyticsPage = () => {
                                   </>
                                 )}
                               </div>
+                              {s.notes && (
+                                <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1 break-words">
+                                  <NotebookPen className="h-3 w-3 mt-0.5 shrink-0" />
+                                  <span className="line-clamp-2">{s.notes}</span>
+                                </p>
+                              )}
                             </div>
                             {isEditable ? (
                               <div className="flex items-center gap-1 shrink-0">
@@ -600,6 +632,8 @@ const StudyAnalyticsPage = () => {
           </>
         )}
       </div>
+
+      <StudyLogDialog open={logOpen} onOpenChange={setLogOpen} onLogged={refreshAnalytics} />
 
       <EditFocusSessionDialog
         open={editOpen}

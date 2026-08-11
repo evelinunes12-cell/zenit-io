@@ -19,6 +19,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { NotebookPen } from "lucide-react";
+import StudyLogDialog from "@/components/StudyLogDialog";
 
 const motivationalTips = [
   { icon: Flame, text: "Mantenha o foco por 25 minutos e descanse. Seu cérebro agradece!" },
@@ -37,6 +39,7 @@ const PomodoroPage = () => {
   const { user } = useAuth();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
   const [draftSettings, setDraftSettings] = useState<PomodoroSettings>(settings);
 
   const { data: subjects = [] } = useQuery({
@@ -94,12 +97,23 @@ const PomodoroPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <StudyLogDialog open={logOpen} onOpenChange={setLogOpen} />
       <header className="border-b border-border px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <SidebarTrigger className="md:hidden" />
           <h1 className="text-lg font-bold text-foreground">Modo Foco</h1>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLogOpen(true)}
+            className="h-8 gap-2 px-3 rounded-lg border border-border/50 bg-card/40 text-muted-foreground hover:text-foreground hover:bg-card/70"
+            title="Registrar estudo manualmente"
+          >
+            <NotebookPen className="h-4 w-4" />
+            <span className="text-xs font-medium hidden sm:inline">Registrar estudo</span>
+          </Button>
           {pipSupported && hasStarted && (
             <Button
               variant="ghost"

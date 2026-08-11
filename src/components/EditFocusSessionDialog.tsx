@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -68,6 +69,7 @@ const EditFocusSessionDialog = ({
   const [qTotal, setQTotal] = useState("");
   const [qCorrect, setQCorrect] = useState("");
   const [subjectId, setSubjectId] = useState<string>("none");
+  const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -80,6 +82,7 @@ const EditFocusSessionDialog = ({
       setQTotal(session.questions_total ? String(session.questions_total) : "");
       setQCorrect(session.questions_correct ? String(session.questions_correct) : "");
       setSubjectId(session.subject_id || "none");
+      setNotes(session.notes || "");
     }
   }, [open, session]);
 
@@ -110,6 +113,7 @@ const EditFocusSessionDialog = ({
       questionsTotal: total,
       questionsCorrect: correct,
       subjectId: subjectId === "none" ? null : subjectId,
+      notes: notes.trim() || null,
     });
     setSaving(false);
     if (ok) {
@@ -236,6 +240,17 @@ const EditFocusSessionDialog = ({
                   <p className="text-[11px] text-muted-foreground mt-1 text-center">acertos</p>
                 </div>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">Observação</Label>
+              <Textarea
+                id="edit-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Anotações sobre esta sessão"
+                rows={3}
+                maxLength={1000}
+              />
             </div>
           </div>
 
