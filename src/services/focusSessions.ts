@@ -141,6 +141,12 @@ export const updateFocusSession = async (
     if (input.subjectId !== undefined) {
       patch.subject_id = input.subjectId;
     }
+    if (input.studyCycleId !== undefined) {
+      patch.study_cycle_id = input.studyCycleId;
+    }
+    if (input.notes !== undefined) {
+      patch.notes = input.notes;
+    }
 
     const { error } = await supabase
       .from("focus_sessions")
