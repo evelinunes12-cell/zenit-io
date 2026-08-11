@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Repeat, Plus, BookOpen, Clock, Trash2, Power, PowerOff, Play, Pencil } from "lucide-react";
+import { Repeat, Plus, BookOpen, Clock, Trash2, Power, PowerOff, Play, Pencil, NotebookPen } from "lucide-react";
+import StudyLogDialog from "@/components/StudyLogDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,7 @@ const StudyCyclePage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCycle, setEditingCycle] = useState<StudyCycle | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [studyLogOpen, setStudyLogOpen] = useState(false);
   const { playCycle } = useStudyCyclePlayer();
 
   const { data: cycles = [], isLoading: loadingCycles } = useQuery({
@@ -135,7 +137,7 @@ const StudyCyclePage = () => {
       <StudyLogDialog
         open={studyLogOpen}
         onOpenChange={setStudyLogOpen}
-        onLogged={() => queryClient.invalidateQueries({ queryKey: ["study-cycles"] })}
+        onLogged={reloadCycles}
       />
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 sm:px-4 py-3 flex items-center gap-3">
         <SidebarTrigger className="md:hidden" />
