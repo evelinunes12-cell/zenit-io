@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Mountain, LogOut, Plus, ArrowLeft, Sun, Moon, ListTodo, StickyNote, Target, ChevronDown } from "lucide-react";
+import { Mountain, LogOut, Plus, ArrowLeft, Sun, Moon, ListTodo, StickyNote, Target, ChevronDown, BookOpenCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { NotificationBell } from "./NotificationBell";
 import ShortcutsHelpDialog from "./ShortcutsHelpDialog";
@@ -29,6 +29,7 @@ import { fetchSubjects } from "@/services/subjects";
 import { createNote, createGoal } from "@/services/planner";
 import { NoteDialog } from "@/components/planner/NoteDialog";
 import { GoalDialog } from "@/components/planner/GoalDialog";
+import StudyLogDialog from "@/components/StudyLogDialog";
 import { toast } from "sonner";
 
 interface NavbarProps {
@@ -43,6 +44,7 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [studyLogOpen, setStudyLogOpen] = useState(false);
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
@@ -135,7 +137,7 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
                         </Button>
                       </DropdownMenuTrigger>
                     </TooltipTrigger>
-                    <TooltipContent>Criar tarefa, anotação ou meta</TooltipContent>
+                    <TooltipContent>Criar tarefa, anotação, meta ou registro de estudo</TooltipContent>
                   </Tooltip>
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem onClick={() => navigate("/task/new")} className="gap-2">
@@ -149,6 +151,10 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
                     <DropdownMenuItem onClick={() => setGoalDialogOpen(true)} className="gap-2">
                       <Target className="w-4 h-4" />
                       Nova meta
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setStudyLogOpen(true)} className="gap-2">
+                      <BookOpenCheck className="w-4 h-4" />
+                      Registrar estudo
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
