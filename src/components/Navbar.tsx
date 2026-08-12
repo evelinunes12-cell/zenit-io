@@ -193,6 +193,17 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
         onSave={(data) => createGoalMut.mutate(data)}
       />
 
+      <StudyLogDialog
+        open={studyLogOpen}
+        onOpenChange={setStudyLogOpen}
+        onLogged={() => {
+          queryClient.invalidateQueries({ queryKey: ["focus-sessions"] });
+          queryClient.invalidateQueries({ queryKey: ["study-analytics"] });
+        }}
+      />
+
+
+
       <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
