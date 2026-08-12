@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/react-query";
 import { fetchActiveSubjects } from "@/services/subjects";
 import { fetchStudyCycles } from "@/services/studyCycles";
@@ -35,7 +36,9 @@ interface StudyLogDialogProps {
   defaultSubjectId?: string | null;
   /** Pré-seleciona um ciclo (opcional) */
   defaultCycleId?: string | null;
-  onLogged?: () => void;
+  /** Exibe a opção de marcar o bloco atual do ciclo como concluído */
+  showMarkCompleted?: boolean;
+  onLogged?: (info: { markCompleted: boolean }) => void;
 }
 
 type TimeMode = "duration" | "range";
@@ -58,6 +61,7 @@ const StudyLogDialog = ({
   onOpenChange,
   defaultSubjectId,
   defaultCycleId,
+  showMarkCompleted = false,
   onLogged,
 }: StudyLogDialogProps) => {
   const { user } = useAuth();
@@ -85,6 +89,7 @@ const StudyLogDialog = ({
   const [questionsTotal, setQuestionsTotal] = useState("");
   const [questionsCorrect, setQuestionsCorrect] = useState("");
   const [notes, setNotes] = useState("");
+  const [markCompleted, setMarkCompleted] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -102,6 +107,7 @@ const StudyLogDialog = ({
     setQuestionsTotal("");
     setQuestionsCorrect("");
     setNotes("");
+    setMarkCompleted(true);
   }, [open, defaultSubjectId, defaultCycleId]);
 
   const totalMinutes = useMemo(() => {
@@ -166,7 +172,7 @@ const StudyLogDialog = ({
     await registerActivity(user.id);
     logXP(user.id, "study_block_completed", XP.STUDY_BLOCK_COMPLETED);
     toast.success(`Estudo registrado: ${formatTotal(totalMinutes)}`);
-    onLogged?.();
+    onLogged?.({ markCompleted: showMarkCompleted && markCompleted });
     onOpenChange(false);
   };
 
@@ -329,6 +335,23 @@ const StudyLogDialog = ({
               maxLength={1000}
             />
           </div>
+          {showMarkCompleted && (
+            <div className="flex items-start gap-2 pt-1">
+              <Checkbox
+                id="study-log-mark-completed"
+                checked={markCompleted}
+                onCheckedChange={(checked) => setMarkCompleted(!!checked)}
+              />
+              <div className="grid gap-0.5 leading-none">
+                <Label htmlFor="study-log-mark-completed" className="cursor-pointer">
+                  Marcar bloco como concluído
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Avança o ciclo para o próximo bloco automaticamente.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter>

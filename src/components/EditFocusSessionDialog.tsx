@@ -47,6 +47,7 @@ interface EditFocusSessionDialogProps {
   onOpenChange: (open: boolean) => void;
   session: FocusSessionWithDetails | null;
   subjects?: SubjectOption[];
+  cycles?: { id: string; name: string }[];
   onSaved?: () => void;
 }
 
@@ -61,6 +62,7 @@ const EditFocusSessionDialog = ({
   onOpenChange,
   session,
   subjects = [],
+  cycles = [],
   onSaved,
 }: EditFocusSessionDialogProps) => {
   const [startedAt, setStartedAt] = useState("");
@@ -69,6 +71,7 @@ const EditFocusSessionDialog = ({
   const [qTotal, setQTotal] = useState("");
   const [qCorrect, setQCorrect] = useState("");
   const [subjectId, setSubjectId] = useState<string>("none");
+  const [cycleId, setCycleId] = useState<string>("none");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -82,6 +85,7 @@ const EditFocusSessionDialog = ({
       setQTotal(session.questions_total ? String(session.questions_total) : "");
       setQCorrect(session.questions_correct ? String(session.questions_correct) : "");
       setSubjectId(session.subject_id || "none");
+      setCycleId(session.study_cycle_id || "none");
       setNotes(session.notes || "");
     }
   }, [open, session]);
@@ -113,6 +117,7 @@ const EditFocusSessionDialog = ({
       questionsTotal: total,
       questionsCorrect: correct,
       subjectId: subjectId === "none" ? null : subjectId,
+      studyCycleId: cycleId === "none" ? null : cycleId,
       notes: notes.trim() || null,
     });
     setSaving(false);
@@ -241,6 +246,25 @@ const EditFocusSessionDialog = ({
                 </div>
               </div>
             </div>
+            {cycles.length > 0 && (
+              <div className="space-y-2">
+                <Label>Ciclo de estudos</Label>
+                <Select value={cycleId} onValueChange={setCycleId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sem ciclo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem ciclo</SelectItem>
+                    {cycles.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="edit-notes">Observação</Label>
               <Textarea

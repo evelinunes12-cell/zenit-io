@@ -122,8 +122,15 @@ const StudyAnalyticsPage = () => {
 
   const analytics = useMemo(() => {
     const totalMinutes = sessions.reduce((a, s) => a + s.duration_minutes, 0);
-    const cycleMinutes = sessions.filter((s) => s.study_cycle_id).reduce((a, s) => a + s.duration_minutes, 0);
-    const pomodoroMinutes = sessions.filter((s) => !s.study_cycle_id).reduce((a, s) => a + s.duration_minutes, 0);
+    const cycleMinutes = sessions
+      .filter((s) => s.source === "cycle" || (s.source !== "manual" && s.study_cycle_id))
+      .reduce((a, s) => a + s.duration_minutes, 0);
+    const pomodoroMinutes = sessions
+      .filter((s) => s.source !== "manual" && !s.study_cycle_id)
+      .reduce((a, s) => a + s.duration_minutes, 0);
+    const manualMinutes = sessions
+      .filter((s) => s.source === "manual")
+      .reduce((a, s) => a + s.duration_minutes, 0);
     const totalSessions = sessions.length;
 
     // By subject
@@ -179,7 +186,7 @@ const StudyAnalyticsPage = () => {
       .sort((a, b) => b.total - a.total);
 
     return {
-      totalMinutes, cycleMinutes, pomodoroMinutes, totalSessions, bySubject, byCycle,
+      totalMinutes, cycleMinutes, pomodoroMinutes, manualMinutes, totalSessions, bySubject, byCycle,
       totalQuestions, totalCorrect, overallAccuracy, questionsBySubject,
     };
   }, [sessions]);
@@ -640,6 +647,7 @@ const StudyAnalyticsPage = () => {
         onOpenChange={setEditOpen}
         session={editingSession}
         subjects={subjects.map((s) => ({ id: s.id, name: s.name, color: s.color }))}
+        cycles={cycles.map((c) => ({ id: c.id, name: c.name }))}
         onSaved={refreshAnalytics}
       />
 

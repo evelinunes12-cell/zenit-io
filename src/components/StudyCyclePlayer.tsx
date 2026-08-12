@@ -8,7 +8,7 @@ import { Play, Pause, SkipForward, RotateCcw, X, Coffee, CheckCircle2, Clipboard
 import { cn } from "@/lib/utils";
 import { DonutTimer } from "@/components/DonutTimer";
 import { toast } from "sonner";
-import ManualStudyLogDialog from "@/components/ManualStudyLogDialog";
+import StudyLogDialog from "@/components/StudyLogDialog";
 import CycleNoteDialog from "@/components/study-cycle/CycleNoteDialog";
 import { useStudyCyclePlayer } from "@/contexts/StudyCyclePlayerContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -532,12 +532,15 @@ const StudyCyclePlayer = () => {
             </div>
           </div>
 
-          <ManualStudyLogDialog
+          <StudyLogDialog
             open={manualLogOpen}
             onOpenChange={setManualLogOpen}
-            cycle={cycle}
-            defaultBlockIndex={currentIndex}
-            onLogged={setManualLogged}
+            defaultCycleId={cycle.id}
+            defaultSubjectId={currentBlock?.subject_id ?? null}
+            showMarkCompleted
+            onLogged={({ markCompleted }) =>
+              setManualLogged({ blockIndex: currentIndex, markCompleted })
+            }
           />
 
           {user && (
