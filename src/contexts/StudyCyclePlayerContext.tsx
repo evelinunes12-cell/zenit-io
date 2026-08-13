@@ -76,7 +76,10 @@ interface StudyCyclePlayerContextValue {
   startTimer: () => void;
   pauseTimer: () => void;
   togglePlayPause: () => void;
-  completeBlock: (questions?: { total: number; correct: number }) => Promise<void>;
+  completeBlock: (
+    questions?: { total: number; correct: number },
+    extras?: { topic?: string | null; notes?: string | null; rating?: number | null }
+  ) => Promise<void>;
   skip: () => void;
   restart: () => void;
   goToBlock: (idx: number) => void;
@@ -334,7 +337,10 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
     resetCycleElapsedTime(cycle.id).catch(() => {});
   }, [cycle, currentIndex, blocks.length, persistProgress]);
 
-  const completeBlock = useCallback(async (questions?: { total: number; correct: number }) => {
+  const completeBlock = useCallback(async (
+    questions?: { total: number; correct: number },
+    extras?: { topic?: string | null; notes?: string | null; rating?: number | null }
+  ) => {
     if (!cycle) return;
     clearTimer();
     setIsRunning(false);
@@ -369,6 +375,9 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
             questionsTotal: qTotal,
             questionsCorrect: qCorrect,
             subjectId: block?.subject_id ?? null,
+            ...(extras?.topic !== undefined ? { topic: extras.topic } : {}),
+            ...(extras?.notes !== undefined ? { notes: extras.notes } : {}),
+            ...(extras?.rating !== undefined ? { rating: extras.rating } : {}),
           });
           currentBlockSessionIdRef.current = sessionId;
         } else {
@@ -380,6 +389,12 @@ export const StudyCyclePlayerProvider: React.FC<{ children: React.ReactNode }> =
             cycle.id,
             qTotal,
             qCorrect,
+            {
+              source: "cycle",
+              topic: extras?.topic ?? null,
+              notes: extras?.notes ?? null,
+              rating: extras?.rating ?? null,
+            },
           );
           currentBlockSessionIdRef.current = created?.id ?? null;
         }

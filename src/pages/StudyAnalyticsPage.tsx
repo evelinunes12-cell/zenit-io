@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Repeat, Timer, CheckCircle, TrendingUp, BookOpen, Target, Pencil, ListChecks, Trash2, X, Plus, NotebookPen } from "lucide-react";
+import { Clock, Repeat, Timer, CheckCircle, TrendingUp, BookOpen, Target, Pencil, ListChecks, Trash2, X, Plus, NotebookPen, Star } from "lucide-react";
 import { toast } from "sonner";
 
 import ActiveCycleProgressCard from "@/components/ActiveCycleProgressCard";
@@ -592,7 +592,21 @@ const StudyAnalyticsPage = () => {
                                     </span>
                                   </>
                                 )}
+                                {s.rating ? (
+                                  <>
+                                    <span>·</span>
+                                    <span className="flex items-center gap-0.5 text-warning">
+                                      <Star className="h-3 w-3 fill-current" />
+                                      {s.rating}/5
+                                    </span>
+                                  </>
+                                ) : null}
                               </div>
+                              {s.topic && (
+                                <p className="text-xs text-muted-foreground mt-1 break-words">
+                                  Assunto: <span className="text-foreground">{s.topic}</span>
+                                </p>
+                              )}
                               {s.notes && (
                                 <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1 break-words">
                                   <NotebookPen className="h-3 w-3 mt-0.5 shrink-0" />

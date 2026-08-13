@@ -14,11 +14,15 @@ export interface FocusSession {
   questions_total?: number;
   questions_correct?: number;
   notes?: string | null;
+  topic?: string | null;
+  rating?: number | null;
   source?: StudySessionSource | null;
 }
 
 export interface CreateFocusSessionExtras {
   notes?: string | null;
+  topic?: string | null;
+  rating?: number | null;
   source?: StudySessionSource;
 }
 
@@ -47,8 +51,11 @@ export const createFocusSession = async (
       questions_total: Math.max(0, Math.floor(questionsTotal || 0)),
       questions_correct: Math.max(0, Math.floor(questionsCorrect || 0)),
       ...(extras?.notes ? { notes: extras.notes } : {}),
+      ...(extras?.topic ? { topic: extras.topic } : {}),
+      ...(extras?.rating ? { rating: extras.rating } : {}),
       source: extras?.source || (studyCycleId ? "cycle" : "pomodoro"),
     };
+
 
     const { data, error } = await supabase
       .from("focus_sessions")
@@ -113,6 +120,9 @@ export interface UpdateFocusSessionInput {
   subjectId?: string | null;
   studyCycleId?: string | null;
   notes?: string | null;
+  topic?: string | null;
+  rating?: number | null;
+
 }
 
 export const updateFocusSession = async (
@@ -147,6 +157,13 @@ export const updateFocusSession = async (
     if (input.notes !== undefined) {
       patch.notes = input.notes;
     }
+    if (input.topic !== undefined) {
+      patch.topic = input.topic;
+    }
+    if (input.rating !== undefined) {
+      patch.rating = input.rating && input.rating >= 1 && input.rating <= 5 ? input.rating : null;
+    }
+
 
     const { error } = await supabase
       .from("focus_sessions")

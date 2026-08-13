@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import {
   Select,
   SelectContent,
@@ -19,6 +19,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import StudySessionExtrasFields, {
+  emptyStudyExtras,
+  normalizeStudyExtras,
+  type StudySessionExtrasValue,
+} from "@/components/study/StudySessionExtrasFields";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/react-query";
 import { fetchActiveSubjects } from "@/services/subjects";
@@ -86,9 +94,8 @@ const StudyLogDialog = ({
   const [hours, setHours] = useState("1");
   const [minutes, setMinutes] = useState("0");
   const [endTime, setEndTime] = useState(nowTime());
-  const [questionsTotal, setQuestionsTotal] = useState("");
-  const [questionsCorrect, setQuestionsCorrect] = useState("");
-  const [notes, setNotes] = useState("");
+  const [extras, setExtras] = useState<StudySessionExtrasValue>(emptyStudyExtras);
+  const [showExtras, setShowExtras] = useState(false);
   const [markCompleted, setMarkCompleted] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -104,9 +111,8 @@ const StudyLogDialog = ({
     setTimeMode("duration");
     setHours("1");
     setMinutes("0");
-    setQuestionsTotal("");
-    setQuestionsCorrect("");
-    setNotes("");
+    setExtras(emptyStudyExtras());
+    setShowExtras(false);
     setMarkCompleted(true);
   }, [open, defaultSubjectId, defaultCycleId]);
 
@@ -147,9 +153,7 @@ const StudyLogDialog = ({
       return;
     }
 
-    const qTotal = Math.max(0, parseInt(questionsTotal) || 0);
-    let qCorrect = Math.max(0, parseInt(questionsCorrect) || 0);
-    if (qCorrect > qTotal) qCorrect = qTotal;
+    const normalized = normalizeStudyExtras(extras);
 
     setSaving(true);
     const created = await createFocusSession(
@@ -158,9 +162,14 @@ const StudyLogDialog = ({
       totalMinutes,
       subjectId === "none" ? null : subjectId,
       cycleId === "none" ? null : cycleId,
-      qTotal,
-      qCorrect,
-      { notes: notes.trim() || null, source: "manual" }
+      normalized.questionsTotal,
+      normalized.questionsCorrect,
+      {
+        notes: normalized.notes,
+        topic: normalized.topic,
+        rating: normalized.rating,
+        source: "manual",
+      }
     );
     setSaving(false);
 
@@ -281,33 +290,6 @@ const StudyLogDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Desempenho em questões (opcional)</Label>
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <Input
-                  type="number"
-                  min={0}
-                  value={questionsTotal}
-                  onChange={(e) => setQuestionsTotal(e.target.value)}
-                  placeholder="0"
-                />
-                <p className="text-[11px] text-muted-foreground mt-1 text-center">total</p>
-              </div>
-              <span className="text-muted-foreground pb-5">/</span>
-              <div className="flex-1">
-                <Input
-                  type="number"
-                  min={0}
-                  value={questionsCorrect}
-                  onChange={(e) => setQuestionsCorrect(e.target.value)}
-                  placeholder="0"
-                />
-                <p className="text-[11px] text-muted-foreground mt-1 text-center">acertos</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
             <Label>Ciclo de estudos (opcional)</Label>
             <Select value={cycleId} onValueChange={setCycleId}>
               <SelectTrigger>
@@ -324,17 +306,32 @@ const StudyLogDialog = ({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="study-log-notes">Observação (opcional)</Label>
-            <Textarea
-              id="study-log-notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="O que você estudou, dificuldades, próximos passos..."
-              rows={3}
-              maxLength={1000}
-            />
-          </div>
+          <Collapsible open={showExtras} onOpenChange={setShowExtras}>
+            <CollapsibleTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-between px-2 text-muted-foreground hover:text-foreground"
+              >
+                <span className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Mais opções
+                </span>
+                <ChevronDown
+                  className={cn("h-4 w-4 transition-transform", showExtras && "rotate-180")}
+                />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <StudySessionExtrasFields
+                value={extras}
+                onChange={(patch) => setExtras((prev) => ({ ...prev, ...patch }))}
+                idPrefix="study-log"
+              />
+            </CollapsibleContent>
+          </Collapsible>
+
           {showMarkCompleted && (
             <div className="flex items-start gap-2 pt-1">
               <Checkbox

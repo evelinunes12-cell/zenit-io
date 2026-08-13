@@ -7,6 +7,7 @@ import { logXP, XP } from "@/services/scoring";
 import { setCurrentStudyInfo, clearCurrentStudyInfo } from "@/lib/studyPresence";
 import { toast } from "sonner";
 import { useDocumentPiP } from "@/hooks/useDocumentPiP";
+import PomodoroCompletionDialog from "@/components/PomodoroCompletionDialog";
 
 export interface PomodoroSettings {
   focusMinutes: number;
@@ -93,6 +94,9 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [completedBlocks, setCompletedBlocks] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [endTime, setEndTime] = useState<number | null>(null);
+  const [completedSessionId, setCompletedSessionId] = useState<string | null>(null);
+  const [completionOpen, setCompletionOpen] = useState(false);
+  const [completedMinutes, setCompletedMinutes] = useState(0);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const SUBJECT_STORAGE_KEY = "focus_timer_subject";
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(() => {
@@ -207,8 +211,22 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       // Registra a sessão de foco no histórico
       if (sessionStartTime) {
-        await createFocusSession(user.id, sessionStartTime, cfg.focusMinutes, selectedSubjectId);
+        const created = await createFocusSession(
+          user.id,
+          sessionStartTime,
+          cfg.focusMinutes,
+          selectedSubjectId,
+          null,
+          0,
+          0,
+          { source: "pomodoro" }
+        );
         setSessionStartTime(null);
+        if (created?.id) {
+          setCompletedSessionId(created.id);
+          setCompletedMinutes(cfg.focusMinutes);
+          setCompletionOpen(true);
+        }
       }
 
       // Invalida os caches para atualizar a UI
@@ -356,6 +374,19 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }}
     >
       {children}
+      <PomodoroCompletionDialog
+        open={completionOpen}
+        onOpenChange={setCompletionOpen}
+        sessionId={completedSessionId}
+        subjectName={selectedSubjectName}
+        durationMinutes={completedMinutes}
+        onSaved={() => {
+          if (user) {
+            queryClient.invalidateQueries({ queryKey: ["focus-sessions", user.id] });
+            queryClient.invalidateQueries({ queryKey: ["study-analytics"] });
+          }
+        }}
+      />
     </FocusTimerContext.Provider>
   );
 };

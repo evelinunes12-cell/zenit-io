@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
+import StudySessionRating from "@/components/study/StudySessionRating";
 import { toast } from "sonner";
 import {
   deleteFocusSession,
@@ -73,6 +74,8 @@ const EditFocusSessionDialog = ({
   const [subjectId, setSubjectId] = useState<string>("none");
   const [cycleId, setCycleId] = useState<string>("none");
   const [notes, setNotes] = useState("");
+  const [topic, setTopic] = useState("");
+  const [rating, setRating] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -87,6 +90,8 @@ const EditFocusSessionDialog = ({
       setSubjectId(session.subject_id || "none");
       setCycleId(session.study_cycle_id || "none");
       setNotes(session.notes || "");
+      setTopic(session.topic || "");
+      setRating(session.rating ?? null);
     }
   }, [open, session]);
 
@@ -119,6 +124,8 @@ const EditFocusSessionDialog = ({
       subjectId: subjectId === "none" ? null : subjectId,
       studyCycleId: cycleId === "none" ? null : cycleId,
       notes: notes.trim() || null,
+      topic: topic.trim() || null,
+      rating: rating && rating >= 1 && rating <= 5 ? rating : null,
     });
     setSaving(false);
     if (ok) {
@@ -147,7 +154,7 @@ const EditFocusSessionDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar registro de estudo</DialogTitle>
             <DialogDescription>
@@ -221,6 +228,17 @@ const EditFocusSessionDialog = ({
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="edit-topic">Assunto estudado</Label>
+              <Input
+                id="edit-topic"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="Ex.: Controle de Constitucionalidade"
+                maxLength={200}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label>Desempenho em questões</Label>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
@@ -264,6 +282,11 @@ const EditFocusSessionDialog = ({
                 </Select>
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label>Como você avalia esta sessão?</Label>
+              <StudySessionRating value={rating} onChange={setRating} />
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="edit-notes">Observação</Label>
