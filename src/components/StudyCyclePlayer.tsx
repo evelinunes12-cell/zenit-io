@@ -4,11 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Play, Pause, SkipForward, RotateCcw, X, Coffee, CheckCircle2, ClipboardEdit, PictureInPicture2, ArrowLeft, ChevronUp, ChevronDown, StickyNote } from "lucide-react";
+import { Play, Pause, SkipForward, RotateCcw, X, Coffee, CheckCircle2, ClipboardEdit, PictureInPicture2, ArrowLeft, ChevronUp, ChevronDown, StickyNote, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DonutTimer } from "@/components/DonutTimer";
 import { toast } from "sonner";
 import StudyLogDialog from "@/components/StudyLogDialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import StudySessionExtrasFields, {
+  emptyStudyExtras,
+  normalizeStudyExtras,
+  type StudySessionExtrasValue,
+} from "@/components/study/StudySessionExtrasFields";
 import CycleNoteDialog from "@/components/study-cycle/CycleNoteDialog";
 import { useStudyCyclePlayer } from "@/contexts/StudyCyclePlayerContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -88,6 +94,8 @@ const StudyCyclePlayer = () => {
   const [questionsTotal, setQuestionsTotal] = useState("");
   const [questionsCorrect, setQuestionsCorrect] = useState("");
   const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [extras, setExtras] = useState<StudySessionExtrasValue>(emptyStudyExtras);
+  const [extrasOpen, setExtrasOpen] = useState(false);
   const sheetScrollRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef<number | null>(null);
   const dragDeltaY = useRef(0);
@@ -96,6 +104,8 @@ const StudyCyclePlayer = () => {
   useEffect(() => {
     setQuestionsTotal("");
     setQuestionsCorrect("");
+    setExtras(emptyStudyExtras());
+    setExtrasOpen(false);
   }, [currentIndex, mode]);
 
   // Collapse sheet when switching to break
@@ -107,7 +117,11 @@ const StudyCyclePlayer = () => {
     const total = Math.max(0, parseInt(questionsTotal) || 0);
     let correct = Math.max(0, parseInt(questionsCorrect) || 0);
     if (correct > total) correct = total;
-    void completeBlock({ total, correct });
+    const normalized = normalizeStudyExtras(extras);
+    void completeBlock(
+      { total, correct },
+      { topic: normalized.topic, notes: normalized.notes, rating: normalized.rating }
+    );
   };
 
   if (!cycle) return null;
@@ -400,6 +414,33 @@ const StudyCyclePlayer = () => {
                         />
                       </div>
                     </div>
+
+                    <Collapsible open={extrasOpen} onOpenChange={setExtrasOpen}>
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-between px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Plus className="h-3.5 w-3.5" />
+                            Mais opções
+                          </span>
+                          <ChevronDown
+                            className={cn("h-3.5 w-3.5 transition-transform", extrasOpen && "rotate-180")}
+                          />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-3">
+                        <StudySessionExtrasFields
+                          value={extras}
+                          onChange={(patch) => setExtras((prev) => ({ ...prev, ...patch }))}
+                          showQuestions={false}
+                          idPrefix="cycle-block"
+                        />
+                      </CollapsibleContent>
+                    </Collapsible>
 
                     <Button
                       onClick={handleCompleteBlock}
