@@ -120,6 +120,9 @@ export interface UpdateFocusSessionInput {
   subjectId?: string | null;
   studyCycleId?: string | null;
   notes?: string | null;
+  topic?: string | null;
+  rating?: number | null;
+
 }
 
 export const updateFocusSession = async (
