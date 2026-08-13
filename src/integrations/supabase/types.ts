@@ -390,10 +390,12 @@ export type Database = {
           notes: string | null
           questions_correct: number
           questions_total: number
+          rating: number | null
           source: string | null
           started_at: string
           study_cycle_id: string | null
           subject_id: string | null
+          topic: string | null
           user_id: string
         }
         Insert: {
@@ -404,10 +406,12 @@ export type Database = {
           notes?: string | null
           questions_correct?: number
           questions_total?: number
+          rating?: number | null
           source?: string | null
           started_at?: string
           study_cycle_id?: string | null
           subject_id?: string | null
+          topic?: string | null
           user_id: string
         }
         Update: {
@@ -418,10 +422,12 @@ export type Database = {
           notes?: string | null
           questions_correct?: number
           questions_total?: number
+          rating?: number | null
           source?: string | null
           started_at?: string
           study_cycle_id?: string | null
           subject_id?: string | null
+          topic?: string | null
           user_id?: string
         }
         Relationships: [
