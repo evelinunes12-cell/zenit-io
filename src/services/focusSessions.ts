@@ -14,11 +14,15 @@ export interface FocusSession {
   questions_total?: number;
   questions_correct?: number;
   notes?: string | null;
+  topic?: string | null;
+  rating?: number | null;
   source?: StudySessionSource | null;
 }
 
 export interface CreateFocusSessionExtras {
   notes?: string | null;
+  topic?: string | null;
+  rating?: number | null;
   source?: StudySessionSource;
 }
 
@@ -47,8 +51,11 @@ export const createFocusSession = async (
       questions_total: Math.max(0, Math.floor(questionsTotal || 0)),
       questions_correct: Math.max(0, Math.floor(questionsCorrect || 0)),
       ...(extras?.notes ? { notes: extras.notes } : {}),
+      ...(extras?.topic ? { topic: extras.topic } : {}),
+      ...(extras?.rating ? { rating: extras.rating } : {}),
       source: extras?.source || (studyCycleId ? "cycle" : "pomodoro"),
     };
+
 
     const { data, error } = await supabase
       .from("focus_sessions")
