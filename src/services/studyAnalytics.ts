@@ -16,6 +16,8 @@ export interface FocusSessionWithDetails {
   questions_total: number;
   questions_correct: number;
   notes: string | null;
+  topic: string | null;
+  rating: number | null;
   source: "pomodoro" | "cycle" | "manual";
 }
 
@@ -61,6 +63,8 @@ export const fetchFocusSessionsWithDetails = async (
       questions_total: s.questions_total ?? 0,
       questions_correct: s.questions_correct ?? 0,
       notes: s.notes ?? null,
+      topic: s.topic ?? null,
+      rating: s.rating ?? null,
       source: (s.source as any) ?? (s.study_cycle_id ? "cycle" : "pomodoro"),
     }));
   } catch (error) {
