@@ -157,6 +157,13 @@ export const updateFocusSession = async (
     if (input.notes !== undefined) {
       patch.notes = input.notes;
     }
+    if (input.topic !== undefined) {
+      patch.topic = input.topic;
+    }
+    if (input.rating !== undefined) {
+      patch.rating = input.rating && input.rating >= 1 && input.rating <= 5 ? input.rating : null;
+    }
+
 
     const { error } = await supabase
       .from("focus_sessions")
