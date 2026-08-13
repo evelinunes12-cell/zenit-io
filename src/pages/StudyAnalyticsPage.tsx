@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Repeat, Timer, CheckCircle, TrendingUp, BookOpen, Target, Pencil, ListChecks, Trash2, X, Plus, NotebookPen } from "lucide-react";
+import { Clock, Repeat, Timer, CheckCircle, TrendingUp, BookOpen, Target, Pencil, ListChecks, Trash2, X, Plus, NotebookPen, Star } from "lucide-react";
 import { toast } from "sonner";
 
 import ActiveCycleProgressCard from "@/components/ActiveCycleProgressCard";
