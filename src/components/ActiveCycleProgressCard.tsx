@@ -5,7 +5,9 @@ import { fetchStudyCycles } from "@/services/studyCycles";
 import { fetchFocusSessionsWithDetails } from "@/services/studyAnalytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Clock, Target, TrendingUp } from "lucide-react";
+import { CalendarDays, Clock, Target, TrendingUp, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { getCycleTiming, cycleTimingBadgeClass } from "@/lib/studyCycleTiming";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -19,12 +21,16 @@ const ActiveCycleProgressCard = () => {
   });
 
   // Find the most recent advanced cycle with dates
+  // Sprint 4.2: escolhe o ciclo pelo estado temporal (nunca trata um ciclo
+  // futuro ou encerrado como "em andamento" só por ser o mais recente).
   const activeCycle = useMemo(() => {
-    return cycles.find(
-      (c) => c.is_advanced && c.start_date && c.end_date && c.is_active
-    ) || cycles.find(
-      (c) => c.is_advanced && c.start_date && c.end_date
-    );
+    const dated = cycles.filter((c) => c.is_advanced && c.start_date && c.end_date);
+    const rank: Record<string, number> = { ending_soon: 0, active: 1, upcoming: 2, completed: 3, undated: 4 };
+    return [...dated].sort((a, b) => {
+      const ra = rank[getCycleTiming(a).status] - rank[getCycleTiming(b).status];
+      if (ra !== 0) return ra;
+      return (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1;
+    })[0];
   }, [cycles]);
 
   const { data: sessions = [] } = useQuery({
@@ -62,7 +68,10 @@ const ActiveCycleProgressCard = () => {
     const focusedHours = Math.round(focusedMinutes / 60 * 10) / 10;
     const focusProgress = plannedHours > 0 ? Math.min(100, Math.round((focusedHours / plannedHours) * 100)) : 0;
 
+    const timing = getCycleTiming(activeCycle);
+
     return {
+      timing,
       cycleName: activeCycle.name,
       startFormatted: format(start, "dd MMM", { locale: ptBR }),
       endFormatted: format(end, "dd MMM yyyy", { locale: ptBR }),
@@ -85,9 +94,31 @@ const ActiveCycleProgressCard = () => {
           <Target className="h-4 w-4 text-primary" />
           Progresso do Ciclo: {analytics.cycleName}
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          {analytics.startFormatted} — {analytics.endFormatted}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            variant="outline"
+            className={`text-[10px] px-1.5 py-0 h-5 ${cycleTimingBadgeClass(analytics.timing.status)}`}
+          >
+            {analytics.timing.label}
+          </Badge>
+          <p className="text-xs text-muted-foreground break-words">
+            {analytics.timing.startFormatted} → {analytics.timing.endFormatted}
+          </p>
+        </div>
+        {analytics.timing.contextLabel && (
+          <p
+            className={`text-xs font-medium flex items-center gap-1 ${
+              analytics.timing.status === "ending_soon" ? "text-warning" : "text-muted-foreground"
+            }`}
+          >
+            {analytics.timing.status === "ending_soon" ? (
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span className="break-words">{analytics.timing.contextLabel}</span>
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Temporal progress */}
