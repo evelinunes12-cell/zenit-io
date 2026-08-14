@@ -151,7 +151,6 @@ const NEAR_DUE_DAYS = 2; // vence hoje / amanhã / depois
 const IN_PROGRESS_STALE_DAYS = 7; // em andamento há muitos dias
 const CREATED_STALE_DAYS = 14; // criada há muito tempo sem atualização
 const CYCLE_IDLE_DAYS = 4; // ciclo sem novos registros
-const CYCLE_NEAR_END_DAYS = 3; // ciclo perto da data final
 const GOAL_NEAR_DAYS = 3; // meta próxima do vencimento
 const GOAL_OVERDUE_LIMIT_DAYS = 30; // não recomendar metas vencidas há muito tempo
 const NOTE_NEAR_DAYS = 3; // anotações de hoje / amanhã / próximas
@@ -438,6 +437,11 @@ function collectCandidates(input: AssistantInput, now: Date): AssistantRecommend
 
   // 2b. Ciclo sem novos registros há muitos dias
   const idleCycle = activeCycles
+    .filter((c) => {
+      const t = getCycleTiming(c, now);
+      // Ciclos futuros ou já encerrados não devem gerar cobrança de inatividade.
+      return t.status !== "upcoming" && t.status !== "completed";
+    })
     .map((c) => {
       const ref = c.lastActivityAt ?? new Date(c.created_at).getTime();
       return { cycle: c, days: daysSince(ref, now) };
