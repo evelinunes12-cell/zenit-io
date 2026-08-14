@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Repeat, Plus, BookOpen, Clock, Trash2, Power, PowerOff, Play, Pencil, NotebookPen } from "lucide-react";
+import { Repeat, Plus, BookOpen, Clock, Trash2, Power, PowerOff, Play, Pencil, NotebookPen, CalendarRange, AlertTriangle } from "lucide-react";
+import { getCycleTiming, cycleTimingBadgeClass } from "@/lib/studyCycleTiming";
 import StudyLogDialog from "@/components/StudyLogDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -220,6 +221,7 @@ const StudyCyclePage = () => {
             {cycles.map((cycle) => {
               const blockCount = cycle.blocks?.length || 0;
               const totalMin = getTotalMinutes(cycle);
+              const timing = getCycleTiming(cycle);
 
               return (
                 <Card
