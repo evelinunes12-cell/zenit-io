@@ -237,6 +237,14 @@ const StudyCyclePage = () => {
                           >
                             {cycle.is_active ? "Ativo" : "Inativo"}
                           </Badge>
+                          {timing.hasDates && (
+                            <Badge
+                              variant="outline"
+                              className={`shrink-0 text-[10px] px-1.5 py-0 h-5 ${cycleTimingBadgeClass(timing.status)}`}
+                            >
+                              {timing.label}
+                            </Badge>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
@@ -249,6 +257,37 @@ const StudyCyclePage = () => {
                             {formatTime(totalMin)}
                           </span>
                         </div>
+
+                        {/* Planejamento temporal (Sprint 4.2) */}
+                        {timing.hasDates && (
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1 min-w-0">
+                              <CalendarRange className="h-3.5 w-3.5 shrink-0" />
+                              <span className="break-words">
+                                {timing.startFormatted ?? "—"} → {timing.endFormatted ?? "—"}
+                              </span>
+                            </span>
+                            {timing.contextLabel && (
+                              <span
+                                className={`flex items-center gap-1 font-medium ${
+                                  timing.status === "ending_soon"
+                                    ? "text-warning"
+                                    : timing.status === "completed"
+                                      ? "text-muted-foreground"
+                                      : "text-foreground"
+                                }`}
+                              >
+                                {timing.status === "ending_soon" ? (
+                                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                ) : (
+                                  <Clock className="h-3.5 w-3.5 shrink-0" />
+                                )}
+                                <span className="break-words">{timing.contextLabel}</span>
+                              </span>
+                            )}
+                          </div>
+                        )}
+
 
                         {/* Block chips */}
                         {cycle.blocks && cycle.blocks.length > 0 && (
