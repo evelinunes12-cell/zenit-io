@@ -16,6 +16,10 @@ import { ptBR } from "date-fns/locale";
 import { type Task, parseDueDate } from "@/services/tasks";
 import { isTaskOverdue } from "@/hooks/useDashboardFilters";
 import { stripHtml } from "@/utils/sanitize";
+import { getCycleTiming, relativeDaysLabel, daysCountLabel } from "@/lib/studyCycleTiming";
+
+/** Janela (dias) para considerar que um ciclo está começando em breve. */
+const CYCLE_STARTING_SOON_DAYS = 3;
 
 /**
  * Academic Assistant — recommendation engine (Sprint 2 + 2.1 + 2.2).
@@ -101,6 +105,7 @@ export interface AssistantCycle {
   name: string;
   is_active: boolean;
   created_at: string;
+  start_date?: string | null;
   end_date: string | null;
   /** Epoch ms of the most recent focus session linked to this cycle (if any). */
   lastActivityAt?: number | null;
@@ -159,8 +164,10 @@ const NOTE_STALE_LIMIT_DAYS = 14; // ignorar anotações planejadas há muito te
 const PRIORITY = {
   TASK_OVERDUE: 100,
   TASK_DUE: 200, // + days (0 = hoje, 1 = amanhã, 2 = depois)
+  CYCLE_STARTING_SOON: 330,
   CYCLE_IDLE: 350,
-  CYCLE_NEAR_END: 360,
+  CYCLE_NEAR_END: 340,
+  CYCLE_RUNNING: 680,
   GOAL_OVERDUE: 400,
   GOAL_NEAR: 450,
   EVENT_TODAY: 500,
