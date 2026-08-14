@@ -147,7 +147,8 @@ const ActiveCycleProgressCard = () => {
           <Progress value={analytics.focusProgress} className="h-2" />
         </div>
 
-        {/* Encouragement */}
+        {/* Encouragement (apenas para ciclos em andamento) */}
+        {(analytics.timing.status === "active" || analytics.timing.status === "ending_soon") && (
         <div className="rounded-lg bg-primary/5 border border-primary/10 p-3 text-center">
           {analytics.focusProgress >= analytics.temporalProgress ? (
             <p className="text-sm text-primary font-medium flex items-center justify-center gap-1.5">
@@ -160,6 +161,7 @@ const ActiveCycleProgressCard = () => {
             </p>
           )}
         </div>
+        )}
       </CardContent>
     </Card>
   );
