@@ -167,6 +167,7 @@ export function DashboardOverview({ username, tasks, completedStatusName }: Dash
         name: c.name,
         is_active: c.is_active,
         created_at: c.created_at,
+        start_date: c.start_date,
         end_date: c.end_date,
         lastActivityAt: activity?.lastActivityAt ?? null,
         sessionCount: activity?.sessionCount ?? 0,
