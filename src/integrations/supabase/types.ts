@@ -1622,6 +1622,10 @@ export type Database = {
       }
       check_overdue_tasks: { Args: never; Returns: undefined }
       check_planner_notifications: { Args: never; Returns: undefined }
+      check_study_cycle_schedule_notifications: {
+        Args: never
+        Returns: undefined
+      }
       check_upcoming_tasks: { Args: never; Returns: undefined }
       consume_invite: { Args: { invite_token: string }; Returns: Json }
       create_default_environment_statuses: {
