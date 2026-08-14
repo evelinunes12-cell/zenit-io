@@ -341,38 +341,93 @@ function collectCandidates(input: AssistantInput, now: Date): AssistantRecommend
 
   const cycleSessionDetail = (cycle: AssistantCycle): AssistantDetail[] => {
     const details: AssistantDetail[] = [];
-    if (cycle.end_date) details.push({ label: "Data final", value: formatDate(parsePlanner(cycle.end_date)) });
+    const timing = getCycleTiming(cycle, now);
+    if (timing.startFormatted) details.push({ label: "Início", value: timing.startFormatted });
+    if (timing.endFormatted) details.push({ label: "Fim", value: timing.endFormatted });
     if (typeof cycle.sessionCount === "number") {
       details.push({ label: "Sessões registradas", value: String(cycle.sessionCount) });
     }
     return details;
   };
 
-  // 2a. Ciclo próximo da data final
-  const cycleNearEnd = activeCycles
-    .filter((c) => c.end_date)
-    .map((c) => ({ cycle: c, days: differenceInCalendarDays(parsePlanner(c.end_date!), now) }))
-    .filter(({ days }) => days >= 0 && days <= CYCLE_NEAR_END_DAYS)
-    .sort((a, b) => a.days - b.days)[0];
-  if (cycleNearEnd) {
-    const { cycle, days } = cycleNearEnd;
+  // 2a. Planejamento temporal do ciclo (Sprint 4.2): começando / terminando.
+  const timedCycles = activeCycles
+    .map((c) => ({ cycle: c, timing: getCycleTiming(c, now) }))
+    .filter(({ timing }) => timing.hasDates);
+
+  // Ciclo que começa em breve (até 3 dias).
+  const startingCycle = timedCycles
+    .filter(({ timing }) => timing.status === "upcoming" && (timing.daysToStart ?? 99) <= CYCLE_STARTING_SOON_DAYS)
+    .sort((a, b) => (a.timing.daysToStart ?? 0) - (b.timing.daysToStart ?? 0))[0];
+  if (startingCycle) {
+    const { cycle, timing } = startingCycle;
+    const when = relativeDaysLabel(timing.daysToStart ?? 0);
+    candidates.push({
+      id: `cycle-start-${cycle.id}`,
+      category: "cycle",
+      icon: CalendarClock,
+      meta: `Ciclo · começa ${when}`,
+      title: `Seu ciclo "${cycle.name}" começa ${when}`,
+      message: `Seu ciclo "${cycle.name}" começa ${when}. Prepare-se para começar seu planejamento.`,
+      tone: "default",
+      priority: PRIORITY.CYCLE_STARTING_SOON,
+      entityKey: `cycle:${cycle.id}`,
+      reason: `O planejamento do ciclo começa ${when}.`,
+      details: cycleSessionDetail(cycle),
+      summary: `Ciclo "${cycle.name}" começa ${when}.`,
+      primaryAction: { label: "Abrir ciclo", to: "/estudos/ciclo" },
+    });
+  }
+
+  // Ciclo em andamento próximo do fim (ending_soon) ou apenas em andamento.
+  const endingCycle = timedCycles
+    .filter(({ timing }) => timing.status === "ending_soon")
+    .sort((a, b) => (a.timing.daysToEnd ?? 0) - (b.timing.daysToEnd ?? 0))[0];
+  const runningCycle = timedCycles
+    .filter(({ timing }) => timing.status === "active" && timing.daysToEnd !== null)
+    .sort((a, b) => (a.timing.daysToEnd ?? 0) - (b.timing.daysToEnd ?? 0))[0];
+
+  if (endingCycle) {
+    const { cycle, timing } = endingCycle;
+    const days = timing.daysToEnd ?? 0;
+    const when = days === 0 ? "hoje" : relativeDaysLabel(days);
     candidates.push({
       id: `cycle-end-${cycle.id}`,
       category: "cycle",
       icon: AlarmClock,
-      meta: `Ciclo · termina ${dueLabel(days)}`,
+      meta: `Ciclo · termina ${when}`,
       title: `Reta final do ciclo "${cycle.name}"`,
-      message: `Seu ciclo "${cycle.name}" termina ${dueLabel(days)}. Você está em um bom momento para consolidar os estudos.`,
-      tone: "default",
+      message: `Seu ciclo "${cycle.name}" termina ${when}. Você ainda tem tempo para concluir seu planejamento.`,
+      tone: "warning",
       priority: PRIORITY.CYCLE_NEAR_END,
       entityKey: `cycle:${cycle.id}`,
-      reason: `Seu ciclo termina ${dueLabel(days)}.`,
+      reason: `Seu ciclo termina ${when}.`,
       details: cycleSessionDetail(cycle),
-      summary: `Ciclo "${cycle.name}" termina ${dueLabel(days)}.`,
+      summary: `Ciclo "${cycle.name}" termina ${when}.`,
+      primaryAction: { label: "Abrir ciclo", to: "/estudos/ciclo" },
+      secondaryAction: { label: "Registrar estudo", to: "/estudos/pomodoro" },
+    });
+  } else if (runningCycle) {
+    const { cycle, timing } = runningCycle;
+    const remaining = daysCountLabel(timing.daysToEnd ?? 0);
+    candidates.push({
+      id: `cycle-running-${cycle.id}`,
+      category: "cycle",
+      icon: CalendarDays,
+      meta: `Ciclo · ${remaining} restantes`,
+      title: `Ciclo "${cycle.name}" em andamento`,
+      message: `Seu ciclo "${cycle.name}" está em andamento e termina em ${remaining}. Continue avançando no seu planejamento.`,
+      tone: "default",
+      priority: PRIORITY.CYCLE_RUNNING,
+      entityKey: `cycle:${cycle.id}`,
+      reason: `Ciclo em andamento com ${remaining} restantes.`,
+      details: cycleSessionDetail(cycle),
+      summary: `Ciclo "${cycle.name}" termina em ${remaining}.`,
       primaryAction: { label: "Abrir ciclo", to: "/estudos/ciclo" },
       secondaryAction: { label: "Registrar estudo", to: "/estudos/pomodoro" },
     });
   }
+
 
   // 2b. Ciclo sem novos registros há muitos dias
   const idleCycle = activeCycles
