@@ -19,7 +19,7 @@ import {
   toggleCycleActive,
   StudyCycle,
   NewBlock,
-  AdvancedCycleMetadata,
+  CyclePlanningMetadata,
 } from "@/services/studyCycles";
 import StudyCycleDialog from "@/components/StudyCycleDialog";
 import CycleNotesSection from "@/components/study-cycle/CycleNotesSection";
@@ -67,15 +67,15 @@ const StudyCyclePage = () => {
   const reloadCycles = () => queryClient.invalidateQueries({ queryKey: ["study-cycles", user?.id] });
   const reloadSubjects = () => queryClient.invalidateQueries({ queryKey: ["subjects-active", user?.id] });
 
-  const handleSave = async (name: string, blocks: NewBlock[], advancedMeta?: AdvancedCycleMetadata) => {
+  const handleSave = async (name: string, blocks: NewBlock[], planning?: CyclePlanningMetadata) => {
     if (!user) return;
     if (editingCycle) {
-      await updateStudyCycle(editingCycle.id, name, blocks);
+      await updateStudyCycle(editingCycle.id, name, blocks, planning);
       toast.success("Ciclo atualizado com sucesso!");
       logXP(user.id, "edit_basic", XP.EDIT_BASIC);
       registerActivity(user.id);
     } else {
-      await createStudyCycle(user.id, name, blocks, advancedMeta);
+      await createStudyCycle(user.id, name, blocks, planning);
       toast.success("Ciclo criado com sucesso!");
       logXP(user.id, "create_cycle", XP.CREATE_ITEM);
       registerActivity(user.id);
