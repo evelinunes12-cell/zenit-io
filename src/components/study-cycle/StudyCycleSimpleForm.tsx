@@ -240,19 +240,55 @@ const StudyCycleSimpleForm = ({ subjects: initialSubjects, onSave, cycleToEdit, 
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
 
+  /** Converte o formulário de planejamento (opcional) em metadados do ciclo. */
+  const buildPlanning = (): { planning: CyclePlanningMetadata } | { error: string } => {
+    const { startDate, endDate, frequency } = planning;
+    if (startDate && endDate && startDate > endDate) {
+      return { error: "A data de início não pode ser posterior à data de fim." };
+    }
+
+    const rawHours = planning.hours.replace(",", ".").trim();
+    let hours: number | null = null;
+    if (rawHours !== "") {
+      const parsed = Number(rawHours);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        return { error: "O tempo planejado deve ser maior que zero." };
+      }
+      hours = parsed;
+    }
+
+    return {
+      planning: {
+        start_date: startDate || null,
+        end_date: endDate || null,
+        hours_per_day: frequency === "daily" ? hours : null,
+        hours_per_week: frequency === "weekly" ? hours : null,
+      },
+    };
+  };
+
   const handleSave = async () => {
     if (!name.trim()) { toast.error("Dê um nome ao seu ciclo."); return; }
     const validBlocks = blocks.filter((b) => b.subject_id);
     if (validBlocks.length === 0) { toast.error("Adicione pelo menos uma disciplina ao ciclo."); return; }
+
+    const result = buildPlanning();
+    if ("error" in result) { toast.error(result.error); return; }
+
     setSaving(true);
     try {
-      await onSave(name.trim(), validBlocks.map((b) => ({ subject_id: b.subject_id, allocated_minutes: b.allocated_minutes })));
+      await onSave(
+        name.trim(),
+        validBlocks.map((b) => ({ subject_id: b.subject_id, allocated_minutes: b.allocated_minutes })),
+        result.planning
+      );
     } catch {
       toast.error("Erro ao salvar o ciclo.");
     } finally {
       setSaving(false);
     }
   };
+
 
   const usedSubjectIds = blocks.map((b) => b.subject_id).filter(Boolean);
 
