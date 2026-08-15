@@ -180,6 +180,8 @@ const StudyCycleSimpleForm = ({ subjects: initialSubjects, onSave, cycleToEdit, 
   const [name, setName] = useState("");
   const [blocks, setBlocks] = useState<BlockRow[]>([]);
   const [saving, setSaving] = useState(false);
+  const [planning, setPlanning] = useState<CyclePlanningFormValue>(emptyCyclePlanning);
+
   const [localSubjects, setLocalSubjects] = useState<Subject[]>(initialSubjects);
   const isEditing = !!cycleToEdit;
 
