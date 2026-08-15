@@ -31,12 +31,26 @@ export interface NewBlock {
   allocated_minutes: number;
 }
 
-export interface AdvancedCycleMetadata {
+/**
+ * Planejamento temporal compartilhado entre Ciclos Simples e Avançados.
+ * Reutiliza as colunas já existentes em `study_cycles`:
+ * start_date / end_date / hours_per_day / hours_per_week.
+ * A frequência (`daily` | `weekly`) é derivada de qual coluna de horas está preenchida.
+ */
+export interface CyclePlanningMetadata {
+  start_date?: string | null;
+  end_date?: string | null;
+  hours_per_day?: number | null;
+  hours_per_week?: number | null;
+  /** true apenas para ciclos gerados pelo wizard avançado. */
+  is_advanced?: boolean;
+}
+
+export type AdvancedCycleMetadata = CyclePlanningMetadata & {
   start_date: string;
   end_date: string;
-  hours_per_day?: number;
-  hours_per_week?: number;
-}
+};
+
 
 export const fetchStudyCycles = async (): Promise<StudyCycle[]> => {
   const { data, error } = await supabase
