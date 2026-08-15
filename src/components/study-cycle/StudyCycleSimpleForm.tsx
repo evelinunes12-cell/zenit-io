@@ -197,11 +197,24 @@ const StudyCycleSimpleForm = ({ subjects: initialSubjects, onSave, cycleToEdit, 
     if (cycleToEdit) {
       setName(cycleToEdit.name);
       setBlocks((cycleToEdit.blocks || []).map((b) => ({ id: generateId(), subject_id: b.subject_id, allocated_minutes: b.allocated_minutes })));
+      setPlanning({
+        startDate: cycleToEdit.start_date ? cycleToEdit.start_date.split("T")[0] : "",
+        endDate: cycleToEdit.end_date ? cycleToEdit.end_date.split("T")[0] : "",
+        frequency: cycleToEdit.hours_per_week != null ? "weekly" : "daily",
+        hours:
+          cycleToEdit.hours_per_week != null
+            ? String(cycleToEdit.hours_per_week)
+            : cycleToEdit.hours_per_day != null
+              ? String(cycleToEdit.hours_per_day)
+              : "",
+      });
     } else {
       setName("");
       setBlocks([{ id: generateId(), subject_id: "", allocated_minutes: 60 }]);
+      setPlanning(emptyCyclePlanning);
     }
   }, [cycleToEdit]);
+
 
   const handleSubjectCreated = (newSubject: Subject) => {
     setLocalSubjects((prev) => [...prev, newSubject].sort((a, b) => a.name.localeCompare(b.name)));
