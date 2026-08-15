@@ -24,7 +24,7 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 interface StudyCycleSimpleFormProps {
   subjects: Subject[];
-  onSave: (name: string, blocks: NewBlock[]) => Promise<void>;
+  onSave: (name: string, blocks: NewBlock[], planning?: CyclePlanningMetadata) => Promise<void>;
   cycleToEdit?: StudyCycle | null;
   userId?: string;
   onSubjectsChanged?: () => void;
