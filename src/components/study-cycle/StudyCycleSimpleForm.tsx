@@ -6,7 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Subject, createSubject } from "@/services/subjects";
-import { NewBlock, StudyCycle } from "@/services/studyCycles";
+import { NewBlock, StudyCycle, CyclePlanningMetadata } from "@/services/studyCycles";
+import CyclePlanningFields, { CyclePlanningFormValue, emptyCyclePlanning } from "@/components/study-cycle/CyclePlanningFields";
+
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
