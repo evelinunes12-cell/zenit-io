@@ -412,10 +412,12 @@ const StudyCycleAdvancedWizard = ({ subjects: initialSubjects, onSave, onCancel,
         allocated_minutes: b.allocated_minutes,
       }));
       const meta: AdvancedCycleMetadata = {
+        is_advanced: true,
         start_date: format(startDate!, "yyyy-MM-dd"),
         end_date: format(endDate!, "yyyy-MM-dd"),
         ...(dedicationType === "per_day" ? { hours_per_day: hoursValue } : { hours_per_week: hoursValue }),
       };
+
       await onSave(name.trim(), finalBlocks, meta);
     } catch {
       toast.error("Erro ao salvar o ciclo.");
