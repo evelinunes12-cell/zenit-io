@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Repeat, Plus, BookOpen, Clock, Trash2, Power, PowerOff, Play, Pencil, NotebookPen, CalendarRange, AlertTriangle } from "lucide-react";
-import { getCycleTiming, cycleTimingBadgeClass } from "@/lib/studyCycleTiming";
+import { getCycleTiming, cycleTimingBadgeClass, formatPlannedDedication } from "@/lib/studyCycleTiming";
 import StudyLogDialog from "@/components/StudyLogDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -222,6 +222,7 @@ const StudyCyclePage = () => {
               const blockCount = cycle.blocks?.length || 0;
               const totalMin = getTotalMinutes(cycle);
               const timing = getCycleTiming(cycle);
+              const plannedDedication = formatPlannedDedication(cycle);
 
               return (
                 <Card
