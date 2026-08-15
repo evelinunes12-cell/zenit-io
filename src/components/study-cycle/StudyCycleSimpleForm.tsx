@@ -315,7 +315,10 @@ const StudyCycleSimpleForm = ({ subjects: initialSubjects, onSave, cycleToEdit, 
         </Button>
       </div>
 
+      <CyclePlanningFields value={planning} onChange={setPlanning} />
+
       {blocks.some((b) => b.subject_id) && (
+
         <div className="rounded-lg bg-primary/5 border border-primary/10 p-3 text-sm text-center">
           <span className="font-semibold text-primary">{blocks.filter((b) => b.subject_id).length} disciplina(s)</span>
           {" · "}
