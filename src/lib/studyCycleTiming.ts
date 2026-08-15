@@ -141,3 +141,37 @@ export const cycleTimingBadgeClass = (status: CycleTemporalStatus): string => {
       return "bg-muted text-muted-foreground border-border";
   }
 };
+
+/**
+ * Dedicação planejada (compartilhada por Ciclos Simples e Avançados).
+ * A frequência é derivada da coluna preenchida: hours_per_day => diária,
+ * hours_per_week => semanal. Apenas armazenamento/exibição (Sprint 4.2).
+ */
+export type CyclePlanningFrequency = "daily" | "weekly";
+
+export interface CyclePlanningInput {
+  hours_per_day?: number | null;
+  hours_per_week?: number | null;
+}
+
+export const getPlanningFrequency = (
+  cycle: CyclePlanningInput
+): CyclePlanningFrequency | null => {
+  if (cycle.hours_per_day != null) return "daily";
+  if (cycle.hours_per_week != null) return "weekly";
+  return null;
+};
+
+/** "2h30 por dia" / "10h por semana" / null quando não planejado. */
+export const formatPlannedDedication = (cycle: CyclePlanningInput): string | null => {
+  const frequency = getPlanningFrequency(cycle);
+  if (!frequency) return null;
+  const hours = frequency === "daily" ? cycle.hours_per_day! : cycle.hours_per_week!;
+  if (!hours || hours <= 0) return null;
+
+  const totalMinutes = Math.round(hours * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  const time = h > 0 ? (m > 0 ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`) : `${m}min`;
+  return `${time} ${frequency === "daily" ? "por dia" : "por semana"}`;
+};
