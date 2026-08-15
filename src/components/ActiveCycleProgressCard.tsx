@@ -24,7 +24,7 @@ const ActiveCycleProgressCard = () => {
   // Sprint 4.2: escolhe o ciclo pelo estado temporal (nunca trata um ciclo
   // futuro ou encerrado como "em andamento" só por ser o mais recente).
   const activeCycle = useMemo(() => {
-    const dated = cycles.filter((c) => c.is_advanced && c.start_date && c.end_date);
+    const dated = cycles.filter((c) => c.start_date && c.end_date);
     const rank: Record<string, number> = { ending_soon: 0, active: 1, upcoming: 2, completed: 3, undated: 4 };
     return [...dated].sort((a, b) => {
       const ra = rank[getCycleTiming(a).status] - rank[getCycleTiming(b).status];

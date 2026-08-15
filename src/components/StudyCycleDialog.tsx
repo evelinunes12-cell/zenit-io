@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Music } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Subject } from "@/services/subjects";
-import { NewBlock, StudyCycle, AdvancedCycleMetadata, CyclePlanningMetadata } from "@/services/studyCycles";
+import { NewBlock, StudyCycle, CyclePlanningMetadata } from "@/services/studyCycles";
 import StudyCycleModeSelector from "@/components/study-cycle/StudyCycleModeSelector";
 import StudyCycleSimpleForm from "@/components/study-cycle/StudyCycleSimpleForm";
 import StudyCycleAdvancedWizard from "@/components/study-cycle/StudyCycleAdvancedWizard";
