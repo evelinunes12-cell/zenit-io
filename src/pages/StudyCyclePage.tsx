@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Repeat, Plus, BookOpen, Clock, Trash2, Power, PowerOff, Play, Pencil, NotebookPen, CalendarRange, AlertTriangle } from "lucide-react";
+import { Repeat, Plus, BookOpen, Clock, Trash2, Power, PowerOff, Play, Pencil, NotebookPen, CalendarRange, AlertTriangle, Target } from "lucide-react";
 import { getCycleTiming, cycleTimingBadgeClass, formatPlannedDedication } from "@/lib/studyCycleTiming";
 import StudyLogDialog from "@/components/StudyLogDialog";
 import { Card, CardContent } from "@/components/ui/card";
