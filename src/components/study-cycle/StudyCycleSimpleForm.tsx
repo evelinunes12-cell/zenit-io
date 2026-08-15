@@ -6,7 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Subject, createSubject } from "@/services/subjects";
-import { NewBlock, StudyCycle } from "@/services/studyCycles";
+import { NewBlock, StudyCycle, CyclePlanningMetadata } from "@/services/studyCycles";
+import CyclePlanningFields, { CyclePlanningFormValue, emptyCyclePlanning } from "@/components/study-cycle/CyclePlanningFields";
+
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -22,7 +24,7 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 interface StudyCycleSimpleFormProps {
   subjects: Subject[];
-  onSave: (name: string, blocks: NewBlock[]) => Promise<void>;
+  onSave: (name: string, blocks: NewBlock[], planning?: CyclePlanningMetadata) => Promise<void>;
   cycleToEdit?: StudyCycle | null;
   userId?: string;
   onSubjectsChanged?: () => void;
@@ -178,6 +180,8 @@ const StudyCycleSimpleForm = ({ subjects: initialSubjects, onSave, cycleToEdit, 
   const [name, setName] = useState("");
   const [blocks, setBlocks] = useState<BlockRow[]>([]);
   const [saving, setSaving] = useState(false);
+  const [planning, setPlanning] = useState<CyclePlanningFormValue>(emptyCyclePlanning);
+
   const [localSubjects, setLocalSubjects] = useState<Subject[]>(initialSubjects);
   const isEditing = !!cycleToEdit;
 
@@ -193,11 +197,24 @@ const StudyCycleSimpleForm = ({ subjects: initialSubjects, onSave, cycleToEdit, 
     if (cycleToEdit) {
       setName(cycleToEdit.name);
       setBlocks((cycleToEdit.blocks || []).map((b) => ({ id: generateId(), subject_id: b.subject_id, allocated_minutes: b.allocated_minutes })));
+      setPlanning({
+        startDate: cycleToEdit.start_date ? cycleToEdit.start_date.split("T")[0] : "",
+        endDate: cycleToEdit.end_date ? cycleToEdit.end_date.split("T")[0] : "",
+        frequency: cycleToEdit.hours_per_week != null ? "weekly" : "daily",
+        hours:
+          cycleToEdit.hours_per_week != null
+            ? String(cycleToEdit.hours_per_week)
+            : cycleToEdit.hours_per_day != null
+              ? String(cycleToEdit.hours_per_day)
+              : "",
+      });
     } else {
       setName("");
       setBlocks([{ id: generateId(), subject_id: "", allocated_minutes: 60 }]);
+      setPlanning(emptyCyclePlanning);
     }
   }, [cycleToEdit]);
+
 
   const handleSubjectCreated = (newSubject: Subject) => {
     setLocalSubjects((prev) => [...prev, newSubject].sort((a, b) => a.name.localeCompare(b.name)));
@@ -223,19 +240,55 @@ const StudyCycleSimpleForm = ({ subjects: initialSubjects, onSave, cycleToEdit, 
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
 
+  /** Converte o formulário de planejamento (opcional) em metadados do ciclo. */
+  const buildPlanning = (): { planning: CyclePlanningMetadata } | { error: string } => {
+    const { startDate, endDate, frequency } = planning;
+    if (startDate && endDate && startDate > endDate) {
+      return { error: "A data de início não pode ser posterior à data de fim." };
+    }
+
+    const rawHours = planning.hours.replace(",", ".").trim();
+    let hours: number | null = null;
+    if (rawHours !== "") {
+      const parsed = Number(rawHours);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        return { error: "O tempo planejado deve ser maior que zero." };
+      }
+      hours = parsed;
+    }
+
+    return {
+      planning: {
+        start_date: startDate || null,
+        end_date: endDate || null,
+        hours_per_day: frequency === "daily" ? hours : null,
+        hours_per_week: frequency === "weekly" ? hours : null,
+      },
+    };
+  };
+
   const handleSave = async () => {
     if (!name.trim()) { toast.error("Dê um nome ao seu ciclo."); return; }
     const validBlocks = blocks.filter((b) => b.subject_id);
     if (validBlocks.length === 0) { toast.error("Adicione pelo menos uma disciplina ao ciclo."); return; }
+
+    const result = buildPlanning();
+    if ("error" in result) { toast.error(result.error); return; }
+
     setSaving(true);
     try {
-      await onSave(name.trim(), validBlocks.map((b) => ({ subject_id: b.subject_id, allocated_minutes: b.allocated_minutes })));
+      await onSave(
+        name.trim(),
+        validBlocks.map((b) => ({ subject_id: b.subject_id, allocated_minutes: b.allocated_minutes })),
+        result.planning
+      );
     } catch {
       toast.error("Erro ao salvar o ciclo.");
     } finally {
       setSaving(false);
     }
   };
+
 
   const usedSubjectIds = blocks.map((b) => b.subject_id).filter(Boolean);
 
@@ -262,7 +315,10 @@ const StudyCycleSimpleForm = ({ subjects: initialSubjects, onSave, cycleToEdit, 
         </Button>
       </div>
 
+      <CyclePlanningFields value={planning} onChange={setPlanning} />
+
       {blocks.some((b) => b.subject_id) && (
+
         <div className="rounded-lg bg-primary/5 border border-primary/10 p-3 text-sm text-center">
           <span className="font-semibold text-primary">{blocks.filter((b) => b.subject_id).length} disciplina(s)</span>
           {" · "}

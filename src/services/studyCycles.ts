@@ -31,12 +31,26 @@ export interface NewBlock {
   allocated_minutes: number;
 }
 
-export interface AdvancedCycleMetadata {
+/**
+ * Planejamento temporal compartilhado entre Ciclos Simples e Avançados.
+ * Reutiliza as colunas já existentes em `study_cycles`:
+ * start_date / end_date / hours_per_day / hours_per_week.
+ * A frequência (`daily` | `weekly`) é derivada de qual coluna de horas está preenchida.
+ */
+export interface CyclePlanningMetadata {
+  start_date?: string | null;
+  end_date?: string | null;
+  hours_per_day?: number | null;
+  hours_per_week?: number | null;
+  /** true apenas para ciclos gerados pelo wizard avançado. */
+  is_advanced?: boolean;
+}
+
+export type AdvancedCycleMetadata = CyclePlanningMetadata & {
   start_date: string;
   end_date: string;
-  hours_per_day?: number;
-  hours_per_week?: number;
-}
+};
+
 
 export const fetchStudyCycles = async (): Promise<StudyCycle[]> => {
   const { data, error } = await supabase
@@ -61,19 +75,24 @@ export const fetchStudyCycles = async (): Promise<StudyCycle[]> => {
   }));
 };
 
+/** Converte o planejamento (opcional) nas colunas persistidas do ciclo. */
+const planningColumns = (planning?: CyclePlanningMetadata) => ({
+  start_date: planning?.start_date || null,
+  end_date: planning?.end_date || null,
+  hours_per_day: planning?.hours_per_day ?? null,
+  hours_per_week: planning?.hours_per_week ?? null,
+});
+
 export const createStudyCycle = async (
   userId: string,
   name: string,
   blocks: NewBlock[],
-  advancedMeta?: AdvancedCycleMetadata
+  planning?: CyclePlanningMetadata
 ): Promise<StudyCycle> => {
   const insertData: any = { user_id: userId, name };
-  if (advancedMeta) {
-    insertData.is_advanced = true;
-    insertData.start_date = advancedMeta.start_date;
-    insertData.end_date = advancedMeta.end_date;
-    if (advancedMeta.hours_per_day != null) insertData.hours_per_day = advancedMeta.hours_per_day;
-    if (advancedMeta.hours_per_week != null) insertData.hours_per_week = advancedMeta.hours_per_week;
+  if (planning) {
+    Object.assign(insertData, planningColumns(planning));
+    if (planning.is_advanced) insertData.is_advanced = true;
   }
 
   const { data: cycle, error: cycleError } = await supabase
@@ -105,12 +124,18 @@ export const createStudyCycle = async (
 export const updateStudyCycle = async (
   cycleId: string,
   name: string,
-  blocks: NewBlock[]
+  blocks: NewBlock[],
+  planning?: CyclePlanningMetadata
 ) => {
+  const updateData: any = { name, current_block_index: 0, current_block_remaining_seconds: null };
+  // `planning` undefined => não altera o planejamento existente (ex.: fluxos legados).
+  if (planning) Object.assign(updateData, planningColumns(planning));
+
   const { error: cycleError } = await supabase
     .from("study_cycles")
-    .update({ name, current_block_index: 0, current_block_remaining_seconds: null })
+    .update(updateData)
     .eq("id", cycleId);
+
 
   if (cycleError) throw cycleError;
 

@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Repeat, Plus, BookOpen, Clock, Trash2, Power, PowerOff, Play, Pencil, NotebookPen, CalendarRange, AlertTriangle } from "lucide-react";
-import { getCycleTiming, cycleTimingBadgeClass } from "@/lib/studyCycleTiming";
+import { Repeat, Plus, BookOpen, Clock, Trash2, Power, PowerOff, Play, Pencil, NotebookPen, CalendarRange, AlertTriangle, Target } from "lucide-react";
+import { getCycleTiming, cycleTimingBadgeClass, formatPlannedDedication } from "@/lib/studyCycleTiming";
 import StudyLogDialog from "@/components/StudyLogDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   toggleCycleActive,
   StudyCycle,
   NewBlock,
-  AdvancedCycleMetadata,
+  CyclePlanningMetadata,
 } from "@/services/studyCycles";
 import StudyCycleDialog from "@/components/StudyCycleDialog";
 import CycleNotesSection from "@/components/study-cycle/CycleNotesSection";
@@ -67,15 +67,15 @@ const StudyCyclePage = () => {
   const reloadCycles = () => queryClient.invalidateQueries({ queryKey: ["study-cycles", user?.id] });
   const reloadSubjects = () => queryClient.invalidateQueries({ queryKey: ["subjects-active", user?.id] });
 
-  const handleSave = async (name: string, blocks: NewBlock[], advancedMeta?: AdvancedCycleMetadata) => {
+  const handleSave = async (name: string, blocks: NewBlock[], planning?: CyclePlanningMetadata) => {
     if (!user) return;
     if (editingCycle) {
-      await updateStudyCycle(editingCycle.id, name, blocks);
+      await updateStudyCycle(editingCycle.id, name, blocks, planning);
       toast.success("Ciclo atualizado com sucesso!");
       logXP(user.id, "edit_basic", XP.EDIT_BASIC);
       registerActivity(user.id);
     } else {
-      await createStudyCycle(user.id, name, blocks, advancedMeta);
+      await createStudyCycle(user.id, name, blocks, planning);
       toast.success("Ciclo criado com sucesso!");
       logXP(user.id, "create_cycle", XP.CREATE_ITEM);
       registerActivity(user.id);
@@ -222,6 +222,7 @@ const StudyCyclePage = () => {
               const blockCount = cycle.blocks?.length || 0;
               const totalMin = getTotalMinutes(cycle);
               const timing = getCycleTiming(cycle);
+              const plannedDedication = formatPlannedDedication(cycle);
 
               return (
                 <Card
@@ -289,6 +290,16 @@ const StudyCyclePage = () => {
                             )}
                           </div>
                         )}
+
+                        {/* Dedicação planejada (opcional, Simples ou Avançado) */}
+                        {plannedDedication && (
+                          <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                            <Target className="h-3.5 w-3.5 shrink-0" />
+                            <span className="break-words">{plannedDedication}</span>
+                          </div>
+                        )}
+
+
 
 
                         {/* Block chips */}
