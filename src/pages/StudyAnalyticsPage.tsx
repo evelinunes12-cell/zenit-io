@@ -308,16 +308,35 @@ const StudyAnalyticsPage = () => {
             ))}
             <Skeleton className="h-72 rounded-xl sm:col-span-2 lg:col-span-4" />
           </div>
-        ) : sessions.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">Nenhuma sessão de estudo encontrada para o período e filtros selecionados.</p>
-              <p className="text-sm text-muted-foreground mt-1">Use o Pomodoro ou Ciclo de Estudos para começar a acompanhar seu desempenho.</p>
-            </CardContent>
-          </Card>
         ) : (
           <>
+            {/* Visão geral do período */}
+            <StudyOverviewSection
+              title={getPeriodTitle(periodPreset, period)}
+              period={period}
+              previousPeriod={previousPeriod}
+              current={currentOverview}
+              previous={previousOverview}
+            />
+
+            {sessions.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground">
+                    Ainda não há dados suficientes para analisar este período.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Ajuste o período ou os filtros, ou registre um estudo para começar a acompanhar seu desempenho.
+                  </p>
+                  <Button variant="outline" size="sm" className="mt-4" onClick={() => setLogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Registrar estudo
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
             {/* Active Cycle Progress */}
             <ActiveCycleProgressCard />
 
@@ -328,6 +347,7 @@ const StudyAnalyticsPage = () => {
               <KpiCard icon={Timer} label="Foco em Pomodoro" value={formatTime(analytics.pomodoroMinutes)} />
               <KpiCard icon={CheckCircle} label="Sessões Realizadas" value={String(analytics.totalSessions)} />
             </div>
+
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
