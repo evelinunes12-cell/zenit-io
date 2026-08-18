@@ -659,7 +659,10 @@ const StudyAnalyticsPage = () => {
                 </CardContent>
               </Card>
             </div>
+              </>
+            )}
           </>
+
         )}
       </div>
 
