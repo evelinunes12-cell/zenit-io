@@ -20,7 +20,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DateRangePicker } from "@/components/DateRangePicker";
+import StudyPeriodPicker from "@/components/study/StudyPeriodPicker";
+import StudyOverviewSection from "@/components/study/StudyOverviewSection";
+import { buildStudyOverview } from "@/lib/studyMetrics";
+import {
+  getPeriodFromPreset,
+  getPeriodTitle,
+  getPreviousPeriod,
+  type StudyPeriod,
+  type StudyPeriodPreset,
+} from "@/lib/studyPeriod";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Repeat, Timer, CheckCircle, TrendingUp, BookOpen, Target, Pencil, ListChecks, Trash2, X, Plus, NotebookPen, Star } from "lucide-react";
 import { toast } from "sonner";
