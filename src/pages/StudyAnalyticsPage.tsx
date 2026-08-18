@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchFocusSessionsWithDetails, FocusSessionWithDetails } from "@/services/studyAnalytics";
@@ -20,7 +20,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DateRangePicker } from "@/components/DateRangePicker";
+import StudyPeriodPicker from "@/components/study/StudyPeriodPicker";
+import StudyOverviewSection from "@/components/study/StudyOverviewSection";
+import { buildStudyOverview } from "@/lib/studyMetrics";
+import {
+  getPeriodFromPreset,
+  getPeriodTitle,
+  getPreviousPeriod,
+  type StudyPeriod,
+  type StudyPeriodPreset,
+} from "@/lib/studyPeriod";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Repeat, Timer, CheckCircle, TrendingUp, BookOpen, Target, Pencil, ListChecks, Trash2, X, Plus, NotebookPen, Star } from "lucide-react";
 import { toast } from "sonner";
@@ -32,9 +41,8 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { startOfMonth, format } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { DateRange } from "react-day-picker";
 
 const EDIT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -50,10 +58,9 @@ const StudyAnalyticsPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: new Date(),
-  });
+  const [periodPreset, setPeriodPreset] = useState<StudyPeriodPreset>("this-month");
+  const [period, setPeriod] = useState<StudyPeriod>(() => getPeriodFromPreset("this-month"));
+  const previousPeriod = useMemo(() => getPreviousPeriod(period), [period]);
   const [originFilter, setOriginFilter] = useState<OriginFilter>("all");
   const [selectedCycleId, setSelectedCycleId] = useState<string>("all");
   const [editingSession, setEditingSession] = useState<FocusSessionWithDetails | null>(null);
@@ -80,10 +87,15 @@ const StudyAnalyticsPage = () => {
     }
   };
 
-  const sessionsQueryKey = ["study-analytics", user?.id, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()];
+  // Single fetch covering previous + current period (avoids N+1 / duplicate queries)
   const { data: allSessions = [], isLoading } = useQuery({
-    queryKey: sessionsQueryKey,
-    queryFn: () => fetchFocusSessionsWithDetails(user!.id, dateRange?.from, dateRange?.to),
+    queryKey: [
+      "study-analytics",
+      user?.id,
+      previousPeriod.from.toISOString(),
+      period.to.toISOString(),
+    ],
+    queryFn: () => fetchFocusSessionsWithDetails(user!.id, previousPeriod.from, period.to),
     enabled: !!user?.id,
   });
 
@@ -102,23 +114,52 @@ const StudyAnalyticsPage = () => {
 
 
   // Apply origin + cycle filters
-  const sessions = useMemo(() => {
-    let filtered = allSessions;
+  const applyFilters = useCallback(
+    (list: FocusSessionWithDetails[]) => {
+      let filtered = list;
 
-    if (originFilter === "cycle") {
-      filtered = filtered.filter((s) => s.source === "cycle" || (s.study_cycle_id !== null && s.source !== "manual"));
-    } else if (originFilter === "pomodoro") {
-      filtered = filtered.filter((s) => s.source === "pomodoro");
-    } else if (originFilter === "manual") {
-      filtered = filtered.filter((s) => s.source === "manual");
-    }
+      if (originFilter === "cycle") {
+        filtered = filtered.filter((s) => s.source === "cycle" || (s.study_cycle_id !== null && s.source !== "manual"));
+      } else if (originFilter === "pomodoro") {
+        filtered = filtered.filter((s) => s.source === "pomodoro");
+      } else if (originFilter === "manual") {
+        filtered = filtered.filter((s) => s.source === "manual");
+      }
 
-    if (selectedCycleId !== "all" && originFilter !== "pomodoro") {
-      filtered = filtered.filter((s) => s.study_cycle_id === selectedCycleId);
-    }
+      if (selectedCycleId !== "all" && originFilter !== "pomodoro") {
+        filtered = filtered.filter((s) => s.study_cycle_id === selectedCycleId);
+      }
 
-    return filtered;
-  }, [allSessions, originFilter, selectedCycleId]);
+      return filtered;
+    },
+    [originFilter, selectedCycleId]
+  );
+
+  // Split the single fetch (previous + current) into both periods
+  const sessions = useMemo(
+    () =>
+      applyFilters(
+        allSessions.filter((s) => {
+          const t = new Date(s.started_at).getTime();
+          return t >= period.from.getTime() && t <= period.to.getTime();
+        })
+      ),
+    [allSessions, applyFilters, period]
+  );
+
+  const previousSessions = useMemo(
+    () =>
+      applyFilters(
+        allSessions.filter((s) => {
+          const t = new Date(s.started_at).getTime();
+          return t >= previousPeriod.from.getTime() && t <= previousPeriod.to.getTime();
+        })
+      ),
+    [allSessions, applyFilters, previousPeriod]
+  );
+
+  const currentOverview = useMemo(() => buildStudyOverview(sessions), [sessions]);
+  const previousOverview = useMemo(() => buildStudyOverview(previousSessions), [previousSessions]);
 
   const analytics = useMemo(() => {
     const totalMinutes = sessions.reduce((a, s) => a + s.duration_minutes, 0);
@@ -235,7 +276,17 @@ const StudyAnalyticsPage = () => {
         {/* Filters */}
         <div className="space-y-3">
           <div className="flex flex-wrap items-end gap-3">
-            <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} defaultPreset="this-month" />
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Período</label>
+              <StudyPeriodPicker
+                preset={periodPreset}
+                period={period}
+                onChange={(nextPreset, nextPeriod) => {
+                  setPeriodPreset(nextPreset);
+                  setPeriod(nextPeriod);
+                }}
+              />
+            </div>
 
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Origem</label>
@@ -299,16 +350,35 @@ const StudyAnalyticsPage = () => {
             ))}
             <Skeleton className="h-72 rounded-xl sm:col-span-2 lg:col-span-4" />
           </div>
-        ) : sessions.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">Nenhuma sessão de estudo encontrada para o período e filtros selecionados.</p>
-              <p className="text-sm text-muted-foreground mt-1">Use o Pomodoro ou Ciclo de Estudos para começar a acompanhar seu desempenho.</p>
-            </CardContent>
-          </Card>
         ) : (
           <>
+            {/* Visão geral do período */}
+            <StudyOverviewSection
+              title={getPeriodTitle(periodPreset, period)}
+              period={period}
+              previousPeriod={previousPeriod}
+              current={currentOverview}
+              previous={previousOverview}
+            />
+
+            {sessions.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground">
+                    Ainda não há dados suficientes para analisar este período.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Ajuste o período ou os filtros, ou registre um estudo para começar a acompanhar seu desempenho.
+                  </p>
+                  <Button variant="outline" size="sm" className="mt-4" onClick={() => setLogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Registrar estudo
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
             {/* Active Cycle Progress */}
             <ActiveCycleProgressCard />
 
@@ -319,6 +389,7 @@ const StudyAnalyticsPage = () => {
               <KpiCard icon={Timer} label="Foco em Pomodoro" value={formatTime(analytics.pomodoroMinutes)} />
               <KpiCard icon={CheckCircle} label="Sessões Realizadas" value={String(analytics.totalSessions)} />
             </div>
+
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -650,7 +721,10 @@ const StudyAnalyticsPage = () => {
                 </CardContent>
               </Card>
             </div>
+              </>
+            )}
           </>
+
         )}
       </div>
 
