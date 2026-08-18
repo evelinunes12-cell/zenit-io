@@ -89,10 +89,15 @@ const StudyAnalyticsPage = () => {
     }
   };
 
-  const sessionsQueryKey = ["study-analytics", user?.id, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()];
+  // Single fetch covering previous + current period (avoids N+1 / duplicate queries)
   const { data: allSessions = [], isLoading } = useQuery({
-    queryKey: sessionsQueryKey,
-    queryFn: () => fetchFocusSessionsWithDetails(user!.id, dateRange?.from, dateRange?.to),
+    queryKey: [
+      "study-analytics",
+      user?.id,
+      previousPeriod.from.toISOString(),
+      period.to.toISOString(),
+    ],
+    queryFn: () => fetchFocusSessionsWithDetails(user!.id, previousPeriod.from, period.to),
     enabled: !!user?.id,
   });
 
