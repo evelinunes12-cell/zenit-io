@@ -111,23 +111,52 @@ const StudyAnalyticsPage = () => {
 
 
   // Apply origin + cycle filters
-  const sessions = useMemo(() => {
-    let filtered = allSessions;
+  const applyFilters = useCallback(
+    (list: FocusSessionWithDetails[]) => {
+      let filtered = list;
 
-    if (originFilter === "cycle") {
-      filtered = filtered.filter((s) => s.source === "cycle" || (s.study_cycle_id !== null && s.source !== "manual"));
-    } else if (originFilter === "pomodoro") {
-      filtered = filtered.filter((s) => s.source === "pomodoro");
-    } else if (originFilter === "manual") {
-      filtered = filtered.filter((s) => s.source === "manual");
-    }
+      if (originFilter === "cycle") {
+        filtered = filtered.filter((s) => s.source === "cycle" || (s.study_cycle_id !== null && s.source !== "manual"));
+      } else if (originFilter === "pomodoro") {
+        filtered = filtered.filter((s) => s.source === "pomodoro");
+      } else if (originFilter === "manual") {
+        filtered = filtered.filter((s) => s.source === "manual");
+      }
 
-    if (selectedCycleId !== "all" && originFilter !== "pomodoro") {
-      filtered = filtered.filter((s) => s.study_cycle_id === selectedCycleId);
-    }
+      if (selectedCycleId !== "all" && originFilter !== "pomodoro") {
+        filtered = filtered.filter((s) => s.study_cycle_id === selectedCycleId);
+      }
 
-    return filtered;
-  }, [allSessions, originFilter, selectedCycleId]);
+      return filtered;
+    },
+    [originFilter, selectedCycleId]
+  );
+
+  // Split the single fetch (previous + current) into both periods
+  const sessions = useMemo(
+    () =>
+      applyFilters(
+        allSessions.filter((s) => {
+          const t = new Date(s.started_at).getTime();
+          return t >= period.from.getTime() && t <= period.to.getTime();
+        })
+      ),
+    [allSessions, applyFilters, period]
+  );
+
+  const previousSessions = useMemo(
+    () =>
+      applyFilters(
+        allSessions.filter((s) => {
+          const t = new Date(s.started_at).getTime();
+          return t >= previousPeriod.from.getTime() && t <= previousPeriod.to.getTime();
+        })
+      ),
+    [allSessions, applyFilters, previousPeriod]
+  );
+
+  const currentOverview = useMemo(() => buildStudyOverview(sessions), [sessions]);
+  const previousOverview = useMemo(() => buildStudyOverview(previousSessions), [previousSessions]);
 
   const analytics = useMemo(() => {
     const totalMinutes = sessions.reduce((a, s) => a + s.duration_minutes, 0);
