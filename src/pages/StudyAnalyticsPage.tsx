@@ -41,9 +41,8 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { startOfMonth, format } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { DateRange } from "react-day-picker";
 
 const EDIT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
