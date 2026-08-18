@@ -244,7 +244,17 @@ const StudyAnalyticsPage = () => {
         {/* Filters */}
         <div className="space-y-3">
           <div className="flex flex-wrap items-end gap-3">
-            <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} defaultPreset="this-month" />
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Período</label>
+              <StudyPeriodPicker
+                preset={periodPreset}
+                period={period}
+                onChange={(nextPreset, nextPeriod) => {
+                  setPeriodPreset(nextPreset);
+                  setPeriod(nextPeriod);
+                }}
+              />
+            </div>
 
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Origem</label>
