@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchStudyCycles } from "@/services/studyCycles";
-import { fetchFocusSessionsWithDetails } from "@/services/studyAnalytics";
+import { fetchStudyCycles, type StudyCycle } from "@/services/studyCycles";
+import { fetchFocusSessionsWithDetails, type FocusSessionWithDetails } from "@/services/studyAnalytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CalendarDays, Clock, Target, AlertTriangle, BookOpen, CalendarOff } from "lucide-react";
@@ -11,6 +11,19 @@ import { getCycleTiming, cycleTimingBadgeClass, formatPlannedDedication } from "
 import { computeCycleProgress, formatMinutes } from "@/lib/studyCycleProgress";
 import { parseISO } from "date-fns";
 
+/** Ordem de exibição dos cards (Sprint 4.3 — múltiplos ciclos). */
+const TIMING_RANK: Record<string, number> = {
+  active: 0,
+  ending_soon: 1,
+  upcoming: 2,
+  completed: 3,
+  undated: 4,
+};
+
+/**
+ * Container: busca todos os ciclos com planejamento temporal e as sessões do
+ * período completo em UMA única query, e renderiza um card por ciclo.
+ */
 const ActiveCycleProgressCard = () => {
   const { user } = useAuth();
 
@@ -20,31 +33,68 @@ const ActiveCycleProgressCard = () => {
     enabled: !!user?.id,
   });
 
-  // Sprint 4.2: escolhe o ciclo pelo estado temporal (nunca trata um ciclo
-  // futuro ou encerrado como "em andamento" só por ser o mais recente).
-  const activeCycle = useMemo(() => {
+  // Somente ciclos com planejamento temporal (start_date + end_date).
+  const plannedCycles = useMemo(() => {
     const dated = cycles.filter((c) => c.start_date && c.end_date);
-    const rank: Record<string, number> = { ending_soon: 0, active: 1, upcoming: 2, completed: 3, undated: 4 };
     return [...dated].sort((a, b) => {
-      const ra = rank[getCycleTiming(a).status] - rank[getCycleTiming(b).status];
+      const ra = TIMING_RANK[getCycleTiming(a).status] - TIMING_RANK[getCycleTiming(b).status];
       if (ra !== 0) return ra;
-      return (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1;
-    })[0];
+      return (a.start_date || "").localeCompare(b.start_date || "");
+    });
   }, [cycles]);
 
+  // Janela global (menor início → maior fim) para evitar N+1 queries.
+  const range = useMemo(() => {
+    if (plannedCycles.length === 0) return null;
+    const starts = plannedCycles.map((c) => c.start_date!).sort();
+    const ends = plannedCycles.map((c) => c.end_date!).sort();
+    return { from: starts[0], to: ends[ends.length - 1] };
+  }, [plannedCycles]);
+
   const { data: sessions = [] } = useQuery({
-    queryKey: ["focus-sessions-cycle", activeCycle?.id, activeCycle?.start_date, activeCycle?.end_date],
+    queryKey: ["focus-sessions-cycles", range?.from, range?.to],
     queryFn: () => {
-      if (!user?.id || !activeCycle?.start_date || !activeCycle?.end_date) return [];
-      return fetchFocusSessionsWithDetails(
-        user.id,
-        parseISO(activeCycle.start_date),
-        parseISO(activeCycle.end_date)
-      );
+      if (!user?.id || !range) return [];
+      return fetchFocusSessionsWithDetails(user.id, parseISO(range.from), parseISO(range.to));
     },
-    enabled: !!user?.id && !!activeCycle,
+    enabled: !!user?.id && !!range,
   });
 
+  // Agrupa as sessões por ciclo — nenhuma sessão cruza de um ciclo para outro.
+  const sessionsByCycle = useMemo(() => {
+    const map = new Map<string, FocusSessionWithDetails[]>();
+    sessions.forEach((s) => {
+      if (!s.study_cycle_id) return;
+      const list = map.get(s.study_cycle_id) ?? [];
+      list.push(s);
+      map.set(s.study_cycle_id, list);
+    });
+    return map;
+  }, [sessions]);
+
+  if (plannedCycles.length === 0) return null;
+
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      {plannedCycles.map((cycle) => (
+        <CycleProgressCard
+          key={cycle.id}
+          cycle={cycle}
+          sessions={sessionsByCycle.get(cycle.id) ?? []}
+        />
+      ))}
+    </div>
+  );
+};
+
+interface CycleProgressCardProps {
+  cycle: StudyCycle;
+  sessions: FocusSessionWithDetails[];
+}
+
+/** Apresentação de um único ciclo. */
+export const CycleProgressCard = ({ cycle, sessions }: CycleProgressCardProps) => {
+  const activeCycle = cycle;
   const timing = activeCycle ? getCycleTiming(activeCycle) : null;
   const progress = useMemo(
     () => (activeCycle ? computeCycleProgress(activeCycle, sessions) : null),
@@ -58,7 +108,7 @@ const ActiveCycleProgressCard = () => {
   const isCompleted = timing.status === "completed";
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-start gap-2 min-w-0 flex-wrap">
           <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
