@@ -59,10 +59,9 @@ const StudyAnalyticsPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: new Date(),
-  });
+  const [periodPreset, setPeriodPreset] = useState<StudyPeriodPreset>("this-month");
+  const [period, setPeriod] = useState<StudyPeriod>(() => getPeriodFromPreset("this-month"));
+  const previousPeriod = useMemo(() => getPreviousPeriod(period), [period]);
   const [originFilter, setOriginFilter] = useState<OriginFilter>("all");
   const [selectedCycleId, setSelectedCycleId] = useState<string>("all");
   const [editingSession, setEditingSession] = useState<FocusSessionWithDetails | null>(null);
