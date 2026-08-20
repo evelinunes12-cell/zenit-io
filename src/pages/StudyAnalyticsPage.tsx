@@ -22,7 +22,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import StudyPeriodPicker from "@/components/study/StudyPeriodPicker";
 import StudyOverviewSection from "@/components/study/StudyOverviewSection";
+import StudyEvolutionSection from "@/components/study/StudyEvolutionSection";
+import StudySubjectPerformanceSection from "@/components/study/StudySubjectPerformanceSection";
 import { buildStudyOverview } from "@/lib/studyMetrics";
+import {
+  buildStudyTimeSeries,
+  buildSubjectPerformance,
+  resolveGranularity,
+} from "@/lib/studyBreakdown";
 import {
   getPeriodFromPreset,
   getPeriodTitle,
@@ -160,6 +167,19 @@ const StudyAnalyticsPage = () => {
 
   const currentOverview = useMemo(() => buildStudyOverview(sessions), [sessions]);
   const previousOverview = useMemo(() => buildStudyOverview(previousSessions), [previousSessions]);
+
+  // Reaproveita as sessões já carregadas (sem novas queries)
+  const granularity = useMemo(() => resolveGranularity(period), [period]);
+  const granularityLabel = granularity === "day" ? "dia" : granularity === "week" ? "semana" : "mês";
+  const timeSeries = useMemo(
+    () => buildStudyTimeSeries(sessions, period, granularity),
+    [sessions, period, granularity]
+  );
+  const subjectPerformance = useMemo(
+    () => buildSubjectPerformance(sessions, previousSessions),
+    [sessions, previousSessions]
+  );
+
 
   const analytics = useMemo(() => {
     const totalMinutes = sessions.reduce((a, s) => a + s.duration_minutes, 0);
@@ -381,6 +401,14 @@ const StudyAnalyticsPage = () => {
               <>
             {/* Active Cycle Progress */}
             <ActiveCycleProgressCard />
+
+            {/* Evolução temporal */}
+            <StudyEvolutionSection series={timeSeries} granularityLabel={granularityLabel} />
+
+            {/* Desempenho por disciplina */}
+            <StudySubjectPerformanceSection rows={subjectPerformance} />
+
+
 
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
