@@ -70,7 +70,7 @@ const buildBuckets = (
     while (isBefore(cursor, period.to)) {
       const end = endOfWeek(cursor, { locale: ptBR, weekStartsOn: 1 });
       buckets.push({
-        key: format(cursor, "yyyy-'W'II"),
+        key: format(cursor, "yyyy-MM-dd"),
         label: format(cursor, "dd/MM", { locale: ptBR }),
         fullLabel: `Semana de ${format(cursor, "dd/MM", { locale: ptBR })}`,
         from: cursor,
