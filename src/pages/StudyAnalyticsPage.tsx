@@ -402,6 +402,14 @@ const StudyAnalyticsPage = () => {
             {/* Active Cycle Progress */}
             <ActiveCycleProgressCard />
 
+            {/* Evolução temporal */}
+            <StudyEvolutionSection series={timeSeries} granularityLabel={granularityLabel} />
+
+            {/* Desempenho por disciplina */}
+            <StudySubjectPerformanceSection rows={subjectPerformance} />
+
+
+
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <KpiCard icon={Clock} label="Tempo Total" value={formatTime(analytics.totalMinutes)} />
