@@ -94,7 +94,7 @@ export const StudyEvolutionSection = ({
             <>
               <div className="w-full overflow-hidden">
                 <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={chartData} margin={{ top: 8, right: 4, left: -18, bottom: 0 }}>
+                  <BarChart data={chartData} margin={{ top: 8, right: 4, left: -4, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" className="opacity-30" vertical={false} />
                     <XAxis
                       dataKey="label"
@@ -107,7 +107,7 @@ export const StudyEvolutionSection = ({
                       tick={{ fontSize: 11 }}
                       tickLine={false}
                       axisLine={false}
-                      width={44}
+                      width={56}
                       domain={metric === "accuracy" ? [0, 100] : undefined}
                       tickFormatter={(v: number) =>
                         metric === "minutes"

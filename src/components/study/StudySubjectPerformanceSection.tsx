@@ -81,7 +81,7 @@ const SubjectRow = ({ row }: { row: SubjectPerformanceRow }) => {
             <span className="text-[11px]">· dados insuficientes para comparação</span>
           ) : null}
         </span>
-        <span className="tabular-nums">{row.sessionsCount} sessões</span>
+        <span className="tabular-nums">{row.sessionsCount} {row.sessionsCount === 1 ? "sessão" : "sessões"}</span>
         <span className="tabular-nums">{Math.round(row.timeShare)}% do tempo</span>
       </div>
 
