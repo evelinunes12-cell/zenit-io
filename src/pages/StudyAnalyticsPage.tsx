@@ -168,6 +168,19 @@ const StudyAnalyticsPage = () => {
   const currentOverview = useMemo(() => buildStudyOverview(sessions), [sessions]);
   const previousOverview = useMemo(() => buildStudyOverview(previousSessions), [previousSessions]);
 
+  // Reaproveita as sessões já carregadas (sem novas queries)
+  const granularity = useMemo(() => resolveGranularity(period), [period]);
+  const granularityLabel = granularity === "day" ? "dia" : granularity === "week" ? "semana" : "mês";
+  const timeSeries = useMemo(
+    () => buildStudyTimeSeries(sessions, period, granularity),
+    [sessions, period, granularity]
+  );
+  const subjectPerformance = useMemo(
+    () => buildSubjectPerformance(sessions, previousSessions),
+    [sessions, previousSessions]
+  );
+
+
   const analytics = useMemo(() => {
     const totalMinutes = sessions.reduce((a, s) => a + s.duration_minutes, 0);
     const cycleMinutes = sessions
