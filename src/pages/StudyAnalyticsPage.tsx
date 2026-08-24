@@ -182,6 +182,20 @@ const StudyAnalyticsPage = () => {
     [sessions, previousSessions]
   );
 
+  const insights = useMemo(
+    () =>
+      buildStudyInsights({
+        overview: currentOverview,
+        previousOverview,
+        series: timeSeries,
+        subjects: subjectPerformance,
+        granularityLabel,
+      }),
+    [currentOverview, previousOverview, timeSeries, subjectPerformance, granularityLabel]
+  );
+
+
+
 
   const analytics = useMemo(() => {
     const totalMinutes = sessions.reduce((a, s) => a + s.duration_minutes, 0);
