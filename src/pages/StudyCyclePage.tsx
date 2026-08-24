@@ -142,7 +142,7 @@ const StudyCyclePage = () => {
       />
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 sm:px-4 py-3 flex items-center gap-3">
         <SidebarTrigger className="md:hidden" />
-        <h1 className="text-base sm:text-lg font-bold text-foreground truncate">Ciclo de Estudos</h1>
+        <p className="text-base sm:text-lg font-bold text-foreground truncate">Ciclo de Estudos</p>
         <Button
           variant="ghost"
           size="sm"
@@ -152,6 +152,7 @@ const StudyCyclePage = () => {
         >
           <NotebookPen className="h-4 w-4" />
           <span className="hidden sm:inline">Registrar estudo</span>
+          <span className="sr-only sm:hidden">Registrar estudo</span>
         </Button>
         <Button onClick={handleOpenCreate} size="sm" className="gap-1.5 sm:hidden">
           <Plus className="h-4 w-4" />

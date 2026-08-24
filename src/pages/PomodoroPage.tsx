@@ -113,6 +113,7 @@ const PomodoroPage = () => {
           >
             <NotebookPen className="h-4 w-4" />
             <span className="text-xs font-medium hidden sm:inline">Registrar estudo</span>
+            <span className="sr-only sm:hidden">Registrar estudo</span>
           </Button>
           {pipSupported && hasStarted && (
             <Button
@@ -125,6 +126,7 @@ const PomodoroPage = () => {
             >
               <PictureInPicture2 className="h-4 w-4" />
               <span className="text-xs font-medium hidden sm:inline">Miniplayer</span>
+            <span className="sr-only sm:hidden">Miniplayer</span>
             </Button>
           )}
           <Button
@@ -136,6 +138,7 @@ const PomodoroPage = () => {
           >
             <Settings2 className="h-4 w-4" />
             <span className="text-xs font-medium hidden sm:inline">Personalizar</span>
+            <span className="sr-only sm:hidden">Personalizar</span>
           </Button>
         </div>
       </header>
