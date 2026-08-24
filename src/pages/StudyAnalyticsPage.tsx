@@ -415,6 +415,9 @@ const StudyAnalyticsPage = () => {
               </Card>
             ) : (
               <>
+            {/* Insights do período */}
+            <StudyInsightsSection insights={insights} />
+
             {/* Active Cycle Progress */}
             <ActiveCycleProgressCard />
 
