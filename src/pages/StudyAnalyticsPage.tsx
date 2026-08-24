@@ -24,6 +24,8 @@ import StudyPeriodPicker from "@/components/study/StudyPeriodPicker";
 import StudyOverviewSection from "@/components/study/StudyOverviewSection";
 import StudyEvolutionSection from "@/components/study/StudyEvolutionSection";
 import StudySubjectPerformanceSection from "@/components/study/StudySubjectPerformanceSection";
+import StudyInsightsSection from "@/components/study/StudyInsightsSection";
+import { buildStudyInsights } from "@/lib/studyInsights";
 import { buildStudyOverview } from "@/lib/studyMetrics";
 import {
   buildStudyTimeSeries,
@@ -179,6 +181,20 @@ const StudyAnalyticsPage = () => {
     () => buildSubjectPerformance(sessions, previousSessions),
     [sessions, previousSessions]
   );
+
+  const insights = useMemo(
+    () =>
+      buildStudyInsights({
+        overview: currentOverview,
+        previousOverview,
+        series: timeSeries,
+        subjects: subjectPerformance,
+        granularityLabel,
+      }),
+    [currentOverview, previousOverview, timeSeries, subjectPerformance, granularityLabel]
+  );
+
+
 
 
   const analytics = useMemo(() => {
@@ -399,6 +415,9 @@ const StudyAnalyticsPage = () => {
               </Card>
             ) : (
               <>
+            {/* Insights do período */}
+            <StudyInsightsSection insights={insights} />
+
             {/* Active Cycle Progress */}
             <ActiveCycleProgressCard />
 
