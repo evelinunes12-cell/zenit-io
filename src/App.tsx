@@ -51,6 +51,7 @@ const RankingPage = lazy(() => import("./pages/RankingPage"));
 const StudyGroups = lazy(() => import("./pages/StudyGroupsComingSoon"));
 const StudyGroupDetail = lazy(() => import("./pages/StudyGroupsComingSoon"));
 import ZenitCommand from "./components/ZenitCommand";
+import RouteMeta from "./components/RouteMeta";
 import XpGainSignal from "./components/XpGainSignal";
 import { AdminRoute } from "./components/AdminRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -136,6 +137,7 @@ const App = () => {
               <PWAInstallPrompt />
               <AppUpdatePrompt />
               <BrowserRouter>
+                <RouteMeta />
                 <ZenitCommand />
                 <XpGainSignal />
                 <FocusTimerProvider>

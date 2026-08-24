@@ -114,6 +114,7 @@ export function AppSidebar() {
             <SidebarMenuButton asChild>
               <NavLink
                 to={item.url}
+                aria-label={item.title}
                 onClick={handleLinkClick}
                 onMouseEnter={() => prefetchRoute(item.url)}
                 onFocus={() => prefetchRoute(item.url)}
@@ -298,6 +299,7 @@ export function AppSidebar() {
                   <TooltipTrigger asChild>
                     <SidebarMenuButton
                       onClick={() => setShowLogoutConfirm(true)}
+                      aria-label="Sair"
                       className="hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
                     >
                       <LogOut className="h-4 w-4" />
