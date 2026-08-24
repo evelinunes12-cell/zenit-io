@@ -136,6 +136,7 @@ const InvitePage = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+      <h1 className="sr-only">Convite para grupo de trabalho no Zenit</h1>
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8">
         <div className="p-2 bg-primary/10 rounded-xl">
