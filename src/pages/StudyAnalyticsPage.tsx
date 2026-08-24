@@ -24,6 +24,8 @@ import StudyPeriodPicker from "@/components/study/StudyPeriodPicker";
 import StudyOverviewSection from "@/components/study/StudyOverviewSection";
 import StudyEvolutionSection from "@/components/study/StudyEvolutionSection";
 import StudySubjectPerformanceSection from "@/components/study/StudySubjectPerformanceSection";
+import StudyInsightsSection from "@/components/study/StudyInsightsSection";
+import { buildStudyInsights } from "@/lib/studyInsights";
 import { buildStudyOverview } from "@/lib/studyMetrics";
 import {
   buildStudyTimeSeries,
