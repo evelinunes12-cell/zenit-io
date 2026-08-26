@@ -343,7 +343,7 @@ export default function TaskStatuses() {
 
         const { error } = await supabase
           .from("task_statuses")
-          .update(updateData)
+          .update(updateData as never)
           .eq("id", editingStatus.id);
 
         if (error) throw error;

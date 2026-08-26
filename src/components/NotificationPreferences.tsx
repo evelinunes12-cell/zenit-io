@@ -100,7 +100,7 @@ const NotificationPreferences = () => {
       const { error } = await supabase
         .from("notification_preferences")
         .upsert(
-          { user_id: user.id, [key]: value },
+          { user_id: user.id, [key]: value } as never,
           { onConflict: "user_id" }
         );
 

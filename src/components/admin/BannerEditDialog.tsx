@@ -157,7 +157,7 @@ const BannerEditDialog = ({ banner, open, onOpenChange, onSaved }: Props) => {
 
     const { error } = await supabase
       .from("system_banners")
-      .update(update)
+      .update(update as never)
       .eq("id", banner.id);
 
     if (error) {
