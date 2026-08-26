@@ -36,6 +36,7 @@ const Planner = lazy(() => import("./pages/Planner"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Support = lazy(() => import("./pages/Support"));
+const AgentConnectInstructions = lazy(() => import("./pages/AgentConnectInstructions"));
 const InvitePage = lazy(() => import("./pages/InvitePage"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const AdminBanners = lazy(() => import("./pages/AdminBanners"));
@@ -85,6 +86,7 @@ const SidebarShell = ({ children }: { children: React.ReactNode }) => {
     pathname === "/archived" ||
     pathname === "/planner" ||
     pathname === "/ranking" ||
+    pathname === "/connect" ||
     pathname === "/task/new" ||
     pathname === "/estudos/pomodoro" ||
     pathname === "/estudos/ciclo" ||
@@ -152,6 +154,7 @@ const App = () => {
                         <Route path="/onboarding" element={<ProtectedRoute><PageTransition><Onboarding /></PageTransition></ProtectedRoute>} />
                         <Route path="/invite/:token" element={<PageTransition><InvitePage /></PageTransition>} />
                         <Route path="/apoie" element={<PageTransition><Support /></PageTransition>} />
+                        <Route path="/connect" element={<PageTransition><AgentConnectInstructions /></PageTransition>} />
                         <Route path="/dashboard" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
                         <Route path="/subjects" element={<ProtectedRoute><PageTransition><Subjects /></PageTransition></ProtectedRoute>} />
                         <Route path="/task-statuses" element={<ProtectedRoute><PageTransition><TaskStatuses /></PageTransition></ProtectedRoute>} />

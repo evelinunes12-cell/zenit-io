@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Home, BookOpen, Settings, ListChecks, Users, BarChart3, Archive, NotebookPen, ShieldCheck, Image, ChevronDown, LayoutDashboard, Bell, Timer, Repeat, Sparkles, Trophy, TrendingUp, LogOut, MessageSquarePlus, RefreshCw } from "lucide-react";
+import { Home, BookOpen, Settings, ListChecks, Users, BarChart3, Archive, NotebookPen, ShieldCheck, Image, ChevronDown, LayoutDashboard, Bell, Timer, Repeat, Sparkles, Trophy, TrendingUp, LogOut, MessageSquarePlus, RefreshCw, Bot } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -34,6 +34,7 @@ const menuItems = [
   { title: "Disciplinas", url: "/subjects", icon: BookOpen, description: "Gerencie suas disciplinas/matérias" },
   { title: "Status", url: "/task-statuses", icon: ListChecks, description: "Personalize os status das tarefas" },
   { title: "Tarefas Arquivadas", url: "/archived", icon: Archive, description: "Tarefas que foram arquivadas" },
+  { title: "Conectar IA", url: "/connect", icon: Bot, description: "Use o Zenit dentro de assistentes como ChatGPT e Claude", isNew: true },
 ];
 
 const analyticsSubItems = [
