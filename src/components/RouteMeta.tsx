@@ -25,6 +25,11 @@ const EXACT_META: Record<string, Meta> = {
     description:
       "Contribua com o Zenit via Pix e ajude a manter a plataforma de estudos gratuita para estudantes e concurseiros.",
   },
+  "/connect": {
+    title: `Conectar assistente de IA — ${SITE_NAME}`,
+    description:
+      "Saiba como conectar o Zenit ao ChatGPT, Claude ou outro cliente MCP para gerenciar tarefas e ciclos por voz ou texto.",
+  },
   "/onboarding": {
     title: `Primeiros passos — ${SITE_NAME}`,
     description: "Configure seu perfil e comece a organizar sua rotina de estudos no Zenit.",
