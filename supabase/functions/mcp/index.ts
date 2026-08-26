@@ -6,7 +6,7 @@
 import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/list-tasks.ts
-import { createClient } from "npm:@supabase/supabase-js@^2.77.0";
+import { createClient } from "npm:@supabase/supabase-js@2.112.4";
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z } from "npm:zod@^3.25.76";
 function supabaseForUser(ctx) {
@@ -48,7 +48,7 @@ var list_tasks_default = defineTool({
 });
 
 // src/lib/mcp/tools/create-task.ts
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.77.0";
+import { createClient as createClient2 } from "npm:@supabase/supabase-js@2.112.4";
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z2 } from "npm:zod@^3.25.76";
 function supabaseForUser2(ctx) {
@@ -95,7 +95,7 @@ var create_task_default = defineTool2({
 });
 
 // src/lib/mcp/tools/list-study-cycles.ts
-import { createClient as createClient3 } from "npm:@supabase/supabase-js@^2.77.0";
+import { createClient as createClient3 } from "npm:@supabase/supabase-js@2.112.4";
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.0";
 function supabaseForUser3(ctx) {
   return createClient3(
@@ -131,7 +131,7 @@ var list_study_cycles_default = defineTool3({
 });
 
 // src/lib/mcp/tools/get-leaderboard.ts
-import { createClient as createClient4 } from "npm:@supabase/supabase-js@^2.77.0";
+import { createClient as createClient4 } from "npm:@supabase/supabase-js@2.112.4";
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z3 } from "npm:zod@^3.25.76";
 function supabaseForUser4(ctx) {
