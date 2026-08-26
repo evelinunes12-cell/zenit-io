@@ -4,24 +4,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck } from "lucide-react";
 
-// The `supabase.auth.oauth` namespace is currently in beta and may be missing
-// from the generated types. This narrow wrapper types only the three methods we
-// use for the MCP authorization consent flow.
+// The `supabase.auth.oauth` namespace is in beta and may be missing from the
+// generated types. This narrow wrapper types only the methods used here.
 type AuthorizationDetails = {
   client?: { name?: string } | null;
+  redirect_uri?: string;
   redirect_url?: string;
   redirect_to?: string;
 };
-type OAuthResult = { data: AuthorizationDetails | null; error: { message: string } | null };
-const oauth = (
-  supabase.auth as unknown as {
-    oauth: {
-      getAuthorizationDetails: (id: string) => Promise<OAuthResult>;
-      approveAuthorization: (id: string) => Promise<OAuthResult>;
-      denyAuthorization: (id: string) => Promise<OAuthResult>;
-    };
-  }
-).oauth;
+type OAuthResult<T> = { data: T | null; error: { message: string } | null };
+type OAuthApi = {
+  getAuthorizationDetails: (id: string) => Promise<OAuthResult<AuthorizationDetails>>;
+  approveAuthorization: (
+    id: string,
+    options?: { skipBrowserRedirect?: boolean },
+  ) => Promise<OAuthResult<AuthorizationDetails>>;
+  denyAuthorization: (
+    id: string,
+    options?: { skipBrowserRedirect?: boolean },
+  ) => Promise<OAuthResult<AuthorizationDetails>>;
+};
+
+function getOAuthApi(): OAuthApi | null {
+  const api = (supabase.auth as unknown as { oauth?: OAuthApi }).oauth;
+  return api && typeof api.getAuthorizationDetails === "function" ? api : null;
+}
+
+function redirectTargetOf(data: AuthorizationDetails | null | undefined) {
+  return data?.redirect_url ?? data?.redirect_to ?? data?.redirect_uri ?? null;
+}
 
 export default function OAuthConsent() {
   const [params] = useSearchParams();
@@ -33,29 +44,46 @@ export default function OAuthConsent() {
   useEffect(() => {
     let active = true;
     (async () => {
-      if (!authorizationId) {
-        setError("Solicitação de autorização inválida (authorization_id ausente).");
-        return;
+      try {
+        if (!authorizationId) {
+          setError("Solicitação de autorização inválida (authorization_id ausente).");
+          return;
+        }
+        const oauth = getOAuthApi();
+        if (!oauth) {
+          setError(
+            "Este navegador carregou uma versão antiga do aplicativo. Recarregue a página (Ctrl+Shift+R) e tente novamente.",
+          );
+          return;
+        }
+        const { data: sess } = await supabase.auth.getSession();
+        if (!active) return;
+        if (!sess.session) {
+          // Preserve the FULL consent URL so auth returns the user here.
+          const next = window.location.pathname + window.location.search;
+          window.location.href = "/auth?redirect=" + encodeURIComponent(next);
+          return;
+        }
+        const { data, error } = await oauth.getAuthorizationDetails(authorizationId);
+        if (!active) return;
+        if (error) {
+          setError(error.message);
+          return;
+        }
+        const immediate = redirectTargetOf(data);
+        if (immediate && !data?.client) {
+          window.location.href = immediate;
+          return;
+        }
+        if (!data) {
+          setError("O servidor de autorização não retornou os dados da solicitação.");
+          return;
+        }
+        setDetails(data);
+      } catch (e) {
+        if (!active) return;
+        setError(e instanceof Error ? e.message : "Erro inesperado ao carregar a solicitação.");
       }
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) {
-        // Preserve the FULL consent URL so auth returns the user here.
-        const next = window.location.pathname + window.location.search;
-        window.location.href = "/auth?redirect=" + encodeURIComponent(next);
-        return;
-      }
-      const { data, error } = await oauth.getAuthorizationDetails(authorizationId);
-      if (!active) return;
-      if (error) {
-        setError(error.message);
-        return;
-      }
-      const immediate = data?.redirect_url ?? data?.redirect_to;
-      if (immediate && !data?.client) {
-        window.location.href = immediate;
-        return;
-      }
-      setDetails(data);
     })();
     return () => {
       active = false;
@@ -64,22 +92,34 @@ export default function OAuthConsent() {
 
   async function decide(approve: boolean) {
     setBusy(true);
-    const { data, error } = approve
-      ? await oauth.approveAuthorization(authorizationId)
-      : await oauth.denyAuthorization(authorizationId);
-    if (error) {
+    try {
+      const oauth = getOAuthApi();
+      if (!oauth) {
+        setError("Recurso de autorização indisponível. Recarregue a página e tente novamente.");
+        setBusy(false);
+        return;
+      }
+      const { data, error } = approve
+        ? await oauth.approveAuthorization(authorizationId, { skipBrowserRedirect: true })
+        : await oauth.denyAuthorization(authorizationId, { skipBrowserRedirect: true });
+      if (error) {
+        setBusy(false);
+        setError(error.message);
+        return;
+      }
+      const target = redirectTargetOf(data);
+      if (!target) {
+        setBusy(false);
+        setError("O servidor de autorização não retornou um redirecionamento.");
+        return;
+      }
+      window.location.href = target;
+    } catch (e) {
       setBusy(false);
-      setError(error.message);
-      return;
+      setError(e instanceof Error ? e.message : "Erro inesperado ao processar a autorização.");
     }
-    const target = data?.redirect_url ?? data?.redirect_to;
-    if (!target) {
-      setBusy(false);
-      setError("O servidor de autorização não retornou um redirecionamento.");
-      return;
-    }
-    window.location.href = target;
   }
+
 
   const clientName = details?.client?.name ?? "um aplicativo";
 
