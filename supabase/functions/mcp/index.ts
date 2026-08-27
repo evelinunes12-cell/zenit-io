@@ -6,19 +6,25 @@
 import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/list-tasks.ts
-import { createClient } from "npm:@supabase/supabase-js@2.112.4";
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z } from "npm:zod@^3.25.76";
+
+// src/lib/mcp/supabase-for-user.ts
+import { createClient } from "npm:@supabase/supabase-js@2.112.4";
 function supabaseForUser(ctx) {
-  return createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_PUBLISHABLE_KEY,
-    {
-      global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-      auth: { persistSession: false, autoRefreshToken: false }
-    }
-  );
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY;
+  const accessToken = ctx.getToken();
+  if (!supabaseUrl || !supabaseKey || !accessToken) {
+    throw new Error("MCP backend authentication is not configured correctly");
+  }
+  return createClient(supabaseUrl, supabaseKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
 }
+
+// src/lib/mcp/tools/list-tasks.ts
 var list_tasks_default = defineTool({
   name: "list_tasks",
   title: "List tasks",
@@ -48,19 +54,8 @@ var list_tasks_default = defineTool({
 });
 
 // src/lib/mcp/tools/create-task.ts
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@2.112.4";
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z2 } from "npm:zod@^3.25.76";
-function supabaseForUser2(ctx) {
-  return createClient2(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_PUBLISHABLE_KEY,
-    {
-      global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-      auth: { persistSession: false, autoRefreshToken: false }
-    }
-  );
-}
 var create_task_default = defineTool2({
   name: "create_task",
   title: "Create task",
@@ -83,7 +78,7 @@ var create_task_default = defineTool2({
     if (description) insert.description = description;
     if (due_date) insert.due_date = due_date;
     if (status) insert.status = status;
-    const { data, error } = await supabaseForUser2(ctx).from("tasks").insert(insert).select("id, subject_name, status, due_date").single();
+    const { data, error } = await supabaseForUser(ctx).from("tasks").insert(insert).select("id, subject_name, status, due_date").single();
     if (error) {
       return { content: [{ type: "text", text: error.message }], isError: true };
     }
@@ -95,18 +90,7 @@ var create_task_default = defineTool2({
 });
 
 // src/lib/mcp/tools/list-study-cycles.ts
-import { createClient as createClient3 } from "npm:@supabase/supabase-js@2.112.4";
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.0";
-function supabaseForUser3(ctx) {
-  return createClient3(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_PUBLISHABLE_KEY,
-    {
-      global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-      auth: { persistSession: false, autoRefreshToken: false }
-    }
-  );
-}
 var list_study_cycles_default = defineTool3({
   name: "list_study_cycles",
   title: "List study cycles",
@@ -117,7 +101,7 @@ var list_study_cycles_default = defineTool3({
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
-    const { data, error } = await supabaseForUser3(ctx).from("study_cycles").select(
+    const { data, error } = await supabaseForUser(ctx).from("study_cycles").select(
       "id, name, is_active, start_date, end_date, study_cycle_blocks(allocated_minutes, order_index, subjects(name))"
     ).eq("user_id", ctx.getUserId()).order("created_at", { ascending: false });
     if (error) {
@@ -131,19 +115,8 @@ var list_study_cycles_default = defineTool3({
 });
 
 // src/lib/mcp/tools/get-leaderboard.ts
-import { createClient as createClient4 } from "npm:@supabase/supabase-js@2.112.4";
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z3 } from "npm:zod@^3.25.76";
-function supabaseForUser4(ctx) {
-  return createClient4(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_PUBLISHABLE_KEY,
-    {
-      global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-      auth: { persistSession: false, autoRefreshToken: false }
-    }
-  );
-}
 var get_leaderboard_default = defineTool4({
   name: "get_leaderboard",
   title: "Get ranking",
@@ -157,7 +130,7 @@ var get_leaderboard_default = defineTool4({
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
-    const { data, error } = await supabaseForUser4(ctx).rpc("get_leaderboard", {
+    const { data, error } = await supabaseForUser(ctx).rpc("get_leaderboard", {
       period_type: period ?? "weekly"
     });
     if (error) {
