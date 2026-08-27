@@ -1,4 +1,4 @@
-import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
+import { defineTool } from "@lovable.dev/mcp-js";
 import { supabaseForUser } from "../supabase-for-user";
 
 export default defineTool({
