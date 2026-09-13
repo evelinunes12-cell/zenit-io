@@ -6,6 +6,17 @@ import getLeaderboardTool from "./tools/get-leaderboard";
 import createSubjectTool from "./tools/create-subject";
 import createNoteTool from "./tools/create-note";
 import createGoalTool from "./tools/create-goal";
+import listSubjectsTool from "./tools/list-subjects";
+import getTaskDetailsTool from "./tools/get-task-details";
+import updateTaskTool from "./tools/update-task";
+import createTaskStepTool from "./tools/create-task-step";
+import listPlanningTool from "./tools/list-planning";
+import updatePlanningItemTool from "./tools/update-planning-item";
+import createStudyScheduleTool from "./tools/create-study-schedule";
+import registerStudySessionTool from "./tools/register-study-session";
+import getStudyPerformanceTool from "./tools/get-study-performance";
+import createStudyCycleTool from "./tools/create-study-cycle";
+import updateStudyCycleTool from "./tools/update-study-cycle";
 
 // The OAuth issuer MUST be the direct Supabase host, built from the project ref
 // (Vite inlines VITE_SUPABASE_PROJECT_ID as a literal at build time, so this
@@ -15,14 +26,33 @@ const projectRef =
   import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset";
 
 export default defineMcp({
-  name: "zenit-mcp",
-  title: "Zenit MCP",
-  version: "0.1.0",
+  name: "zenit-io",
+  title: "zenit-io",
+  version: "0.2.0",
   instructions:
-    "Tools for Zenit, a study, focus and productivity app. Use `list_tasks` and `create_task` to manage tasks, `list_study_cycles` to inspect study cycles, `get_leaderboard` to read the XP ranking, `create_subject` to create disciplines, `create_note` to add notes, and `create_goal` to set study goals.",
+    "Ferramentas do Zenit para gerenciar tarefas e etapas, planejamento, disciplinas, ciclos, sessões de estudo e desempenho. Antes de criar vínculos, use as ferramentas de listagem para localizar IDs válidos do usuário autenticado.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [listTasksTool, createTaskTool, listStudyCyclesTool, getLeaderboardTool, createSubjectTool, createNoteTool, createGoalTool],
+  tools: [
+    listTasksTool,
+    getTaskDetailsTool,
+    createTaskTool,
+    updateTaskTool,
+    createTaskStepTool,
+    listSubjectsTool,
+    createSubjectTool,
+    listPlanningTool,
+    createNoteTool,
+    createGoalTool,
+    updatePlanningItemTool,
+    createStudyScheduleTool,
+    listStudyCyclesTool,
+    createStudyCycleTool,
+    updateStudyCycleTool,
+    registerStudySessionTool,
+    getStudyPerformanceTool,
+    getLeaderboardTool,
+  ],
 });

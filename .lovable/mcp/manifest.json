@@ -11,9 +11,9 @@
   },
   "mcp": {
     "server": {
-      "name": "zenit-mcp",
-      "version": "0.1.0",
-      "title": "Zenit MCP"
+      "name": "zenit-io",
+      "version": "0.2.0",
+      "title": "zenit-io"
     },
     "tools": [
       {
@@ -49,6 +49,32 @@
         "outputSchema": null
       },
       {
+        "name": "get_task_details",
+        "title": "Consultar tarefa completa",
+        "description": "Consulta uma tarefa do usuário com checklist, links e etapas detalhadas.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID da tarefa."
+            }
+          },
+          "required": [
+            "task_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
         "name": "create_task",
         "title": "Create task",
         "description": "Create a new task (study/assignment) for the signed-in user via the app's database.",
@@ -76,6 +102,16 @@
             "status": {
               "type": "string",
               "description": "Optional status name. Defaults to the app's default status."
+            },
+            "google_docs_link": {
+              "type": "string",
+              "format": "uri",
+              "description": "Optional Google Docs link."
+            },
+            "canva_link": {
+              "type": "string",
+              "format": "uri",
+              "description": "Optional Canva link."
             }
           },
           "required": [
@@ -87,25 +123,156 @@
         "outputSchema": null
       },
       {
-        "name": "list_study_cycles",
-        "title": "List study cycles",
-        "description": "List the signed-in user's study cycles with their blocks (subjects and allocated minutes).",
+        "name": "update_task",
+        "title": "Atualizar tarefa",
+        "description": "Atualiza título, descrição, entrega, status, links ou arquivamento de uma tarefa pessoal.",
         "annotations": {
-          "readOnlyHint": true,
-          "idempotentHint": true,
+          "readOnlyHint": false,
+          "destructiveHint": false,
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
-          "properties": {}
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID da tarefa."
+            },
+            "subject_name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Novo título da tarefa."
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Nova descrição; null remove o conteúdo."
+            },
+            "due_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data em YYYY-MM-DD; null remove a data."
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Nome exato do novo status."
+            },
+            "google_docs_link": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Link do Google Docs; null remove."
+            },
+            "canva_link": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Link do Canva; null remove."
+            },
+            "is_archived": {
+              "type": "boolean",
+              "description": "Arquiva ou restaura a tarefa."
+            }
+          },
+          "required": [
+            "task_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
       {
-        "name": "get_leaderboard",
-        "title": "Get ranking",
-        "description": "Get the XP leaderboard (ranking) of users for a given period. Returns top users ordered by total XP.",
+        "name": "create_task_step",
+        "title": "Criar etapa de tarefa",
+        "description": "Cria uma etapa detalhada em uma tarefa pessoal do usuário.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID da tarefa."
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Título da etapa."
+            },
+            "description": {
+              "type": "string",
+              "description": "Descrição da etapa."
+            },
+            "due_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Data em YYYY-MM-DD."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "Não Iniciado",
+                "Em Progresso",
+                "Concluído"
+              ],
+              "description": "Status inicial."
+            },
+            "google_docs_link": {
+              "type": "string",
+              "format": "uri",
+              "description": "Link do Google Docs."
+            },
+            "canva_link": {
+              "type": "string",
+              "format": "uri",
+              "description": "Link do Canva."
+            }
+          },
+          "required": [
+            "task_id",
+            "title"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_subjects",
+        "title": "Listar disciplinas",
+        "description": "Lista as disciplinas do usuário para localizar IDs e verificar quais estão ativas.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -114,21 +281,9 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "period": {
-              "type": "string",
-              "enum": [
-                "daily",
-                "weekly",
-                "monthly",
-                "all_time"
-              ],
-              "description": "Ranking period. Defaults to 'weekly'."
-            },
-            "limit": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "description": "Max number of entries to return. Defaults to 20."
+            "include_inactive": {
+              "type": "boolean",
+              "description": "Inclui disciplinas desativadas. Padrão: false."
             }
           },
           "additionalProperties": false,
@@ -165,6 +320,38 @@
           "required": [
             "name"
           ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_planning",
+        "title": "Consultar planejamento",
+        "description": "Lista anotações, metas e horários do usuário, com filtros opcionais de data.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Data inicial em YYYY-MM-DD."
+            },
+            "to_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Data final em YYYY-MM-DD."
+            },
+            "include_completed": {
+              "type": "boolean",
+              "description": "Inclui itens concluídos. Padrão: false."
+            }
+          },
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
@@ -265,6 +452,453 @@
           "required": [
             "title"
           ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_planning_item",
+        "title": "Atualizar anotação ou meta",
+        "description": "Atualiza uma anotação ou meta do usuário, incluindo progresso e conclusão.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "item_type": {
+              "type": "string",
+              "enum": [
+                "note",
+                "goal"
+              ],
+              "description": "Tipo do item."
+            },
+            "item_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID da anotação ou meta."
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description_or_content": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Descrição da meta ou conteúdo da anotação."
+            },
+            "date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data planejada ou data-alvo."
+            },
+            "completed": {
+              "type": "boolean"
+            },
+            "progress": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Progresso da meta; ignorado em anotações."
+            },
+            "pinned": {
+              "type": "boolean",
+              "description": "Fixação da anotação; ignorada em metas."
+            }
+          },
+          "required": [
+            "item_type",
+            "item_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_study_schedule",
+        "title": "Criar horário no planejamento",
+        "description": "Cria um horário fixo semanal ou um evento único na agenda do usuário.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "fixed",
+                "variable"
+              ],
+              "description": "fixed repete semanalmente; variable é um evento único."
+            },
+            "day_of_week": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6,
+              "description": "Dia da semana: 0 domingo até 6 sábado."
+            },
+            "start_time": {
+              "type": "string",
+              "pattern": "^\\d{2}:\\d{2}$"
+            },
+            "end_time": {
+              "type": "string",
+              "pattern": "^\\d{2}:\\d{2}$"
+            },
+            "specific_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Obrigatória para evento variable."
+            },
+            "color": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$"
+            }
+          },
+          "required": [
+            "title",
+            "type",
+            "day_of_week",
+            "start_time",
+            "end_time"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_study_cycles",
+        "title": "List study cycles",
+        "description": "List the signed-in user's study cycles with their blocks (subjects and allocated minutes).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_study_cycle",
+        "title": "Criar ciclo de estudos",
+        "description": "Cria um ciclo com disciplinas, tempos e planejamento temporal opcional.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "blocks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "subject_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "allocated_minutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1440
+                  }
+                },
+                "required": [
+                  "subject_id",
+                  "allocated_minutes"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 1,
+              "description": "Blocos na ordem em que serão estudados."
+            },
+            "start_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "end_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "hours_per_day": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 24
+            },
+            "hours_per_week": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 168
+            },
+            "activate": {
+              "type": "boolean",
+              "description": "Ativa este ciclo e desativa os demais."
+            }
+          },
+          "required": [
+            "name",
+            "blocks"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_study_cycle",
+        "title": "Atualizar ciclo de estudos",
+        "description": "Atualiza nome, datas, dedicação planejada ou estado ativo de um ciclo do usuário.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "cycle_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "start_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "end_date": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "hours_per_day": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 24
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "hours_per_week": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 168
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "is_active": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "cycle_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "register_study_session",
+        "title": "Registrar estudo",
+        "description": "Registra uma sessão de estudo com duração, disciplina, questões, assunto e avaliação.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "started_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Início em ISO 8601 com fuso horário."
+            },
+            "duration_minutes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1440
+            },
+            "subject_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "study_cycle_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "source": {
+              "type": "string",
+              "enum": [
+                "manual",
+                "pomodoro",
+                "cycle"
+              ]
+            },
+            "questions_total": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "questions_correct": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "topic": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 5000
+            },
+            "rating": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            }
+          },
+          "required": [
+            "started_at",
+            "duration_minutes"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_study_performance",
+        "title": "Consultar desempenho de estudos",
+        "description": "Resume tempo, sessões, questões, acertos e desempenho por disciplina em um período.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Data inicial em YYYY-MM-DD."
+            },
+            "to_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Data final em YYYY-MM-DD."
+            },
+            "subject_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "study_cycle_id": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "required": [
+            "from_date",
+            "to_date"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_leaderboard",
+        "title": "Get ranking",
+        "description": "Get the XP leaderboard (ranking) of users for a given period. Returns top users ordered by total XP.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "period": {
+              "type": "string",
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "all_time"
+              ],
+              "description": "Ranking period. Defaults to 'weekly'."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Max number of entries to return. Defaults to 20."
+            }
+          },
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },

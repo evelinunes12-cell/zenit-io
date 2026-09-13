@@ -9,17 +9,53 @@ import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z } from "npm:zod@^3.25.76";
 
-// src/lib/mcp/supabase-for-user.ts
+// src/lib/mcp/supabase.ts
 import { createClient } from "npm:@supabase/supabase-js@2.112.4";
-function supabaseForUser(ctx) {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY;
-  const accessToken = ctx.getToken();
-  if (!supabaseUrl || !supabaseKey || !accessToken) {
-    throw new Error("MCP backend authentication is not configured correctly");
+function runtimeEnv(name) {
+  const runtime = globalThis;
+  return runtime.Deno?.env?.get?.(name) ?? runtime.process?.env?.[name];
+}
+function configuredEnv(names) {
+  for (const name of names) {
+    const value = runtimeEnv(name)?.trim();
+    if (value) return value;
   }
-  return createClient(supabaseUrl, supabaseKey, {
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  return void 0;
+}
+function supabaseProjectUrl() {
+  const url = configuredEnv(["SUPABASE_URL", "VITE_SUPABASE_URL"]);
+  if (!url) throw new Error("SUPABASE_URL is required");
+  return url;
+}
+function supabasePublishableKey() {
+  const direct = configuredEnv([
+    "SUPABASE_PUBLISHABLE_KEY",
+    "VITE_SUPABASE_PUBLISHABLE_KEY"
+  ]);
+  if (direct) return direct;
+  const keyset = runtimeEnv("SUPABASE_PUBLISHABLE_KEYS");
+  if (keyset) {
+    try {
+      const parsed = JSON.parse(keyset);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const keys = parsed;
+        const key = [keys.default, ...Object.values(keys)].find(
+          (value) => typeof value === "string" && value.trim().startsWith("sb_publishable_")
+        );
+        if (key) return key.trim();
+      }
+    } catch {
+    }
+  }
+  const legacy = configuredEnv(["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"]);
+  if (legacy) return legacy;
+  throw new Error("Supabase publishable key is required");
+}
+function supabaseForUser(ctx) {
+  const token = ctx.getToken();
+  if (!token) throw new Error("Authenticated MCP access is required");
+  return createClient(supabaseProjectUrl(), supabasePublishableKey(), {
+    global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
@@ -64,10 +100,12 @@ var create_task_default = defineTool2({
     subject_name: z2.string().trim().min(1).describe("Subject or title of the task."),
     description: z2.string().trim().optional().describe("Optional details about the task."),
     due_date: z2.string().optional().describe("Optional due date in YYYY-MM-DD format."),
-    status: z2.string().optional().describe("Optional status name. Defaults to the app's default status.")
+    status: z2.string().optional().describe("Optional status name. Defaults to the app's default status."),
+    google_docs_link: z2.string().url().optional().describe("Optional Google Docs link."),
+    canva_link: z2.string().url().optional().describe("Optional Canva link.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-  handler: async ({ subject_name, description, due_date, status }, ctx) => {
+  handler: async ({ subject_name, description, due_date, status, google_docs_link, canva_link }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -78,7 +116,9 @@ var create_task_default = defineTool2({
     if (description) insert.description = description;
     if (due_date) insert.due_date = due_date;
     if (status) insert.status = status;
-    const { data, error } = await supabaseForUser(ctx).from("tasks").insert(insert).select("id, subject_name, status, due_date").single();
+    if (google_docs_link) insert.google_docs_link = google_docs_link;
+    if (canva_link) insert.canva_link = canva_link;
+    const { data, error } = await supabaseForUser(ctx).from("tasks").insert(insert).select("id, subject_name, description, status, due_date, google_docs_link, canva_link").single();
     if (error) {
       return { content: [{ type: "text", text: error.message }], isError: true };
     }
@@ -102,7 +142,7 @@ var list_study_cycles_default = defineTool3({
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
     const { data, error } = await supabaseForUser(ctx).from("study_cycles").select(
-      "id, name, is_active, start_date, end_date, study_cycle_blocks(allocated_minutes, order_index, subjects(name))"
+      "id, name, is_active, start_date, end_date, hours_per_day, hours_per_week, current_block_index, current_block_elapsed_time, study_cycle_blocks(id, subject_id, allocated_minutes, order_index, subjects(name, color))"
     ).eq("user_id", ctx.getUserId()).order("created_at", { ascending: false });
     if (error) {
       return { content: [{ type: "text", text: error.message }], isError: true };
@@ -261,18 +301,414 @@ var create_goal_default = defineTool7({
   }
 });
 
+// src/lib/mcp/tools/list-subjects.ts
+import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z7 } from "npm:zod@^3.25.76";
+var list_subjects_default = defineTool8({
+  name: "list_subjects",
+  title: "Listar disciplinas",
+  description: "Lista as disciplinas do usu\xE1rio para localizar IDs e verificar quais est\xE3o ativas.",
+  inputSchema: {
+    include_inactive: z7.boolean().optional().describe("Inclui disciplinas desativadas. Padr\xE3o: false.")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ include_inactive }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    let query = supabaseForUser(ctx).from("subjects").select("id, name, color, is_active, created_at").eq("user_id", ctx.getUserId()).order("name");
+    if (!include_inactive) query = query.eq("is_active", true);
+    const { data, error } = await query;
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return { content: [{ type: "text", text: JSON.stringify(data ?? []) }], structuredContent: { subjects: data ?? [] } };
+  }
+});
+
+// src/lib/mcp/tools/get-task-details.ts
+import { defineTool as defineTool9 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z8 } from "npm:zod@^3.25.76";
+var get_task_details_default = defineTool9({
+  name: "get_task_details",
+  title: "Consultar tarefa completa",
+  description: "Consulta uma tarefa do usu\xE1rio com checklist, links e etapas detalhadas.",
+  inputSchema: { task_id: z8.string().uuid().describe("ID da tarefa.") },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ task_id }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    const { data, error } = await supabaseForUser(ctx).from("tasks").select("id, subject_name, description, due_date, status, google_docs_link, canva_link, checklist, is_archived, created_at, updated_at, task_steps(id, title, description, due_date, status, google_docs_link, canva_link, order_index, checklist)").eq("id", task_id).eq("user_id", ctx.getUserId()).single();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { task: data } };
+  }
+});
+
+// src/lib/mcp/tools/update-task.ts
+import { defineTool as defineTool10 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z9 } from "npm:zod@^3.25.76";
+var dateSchema = z9.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable();
+var update_task_default = defineTool10({
+  name: "update_task",
+  title: "Atualizar tarefa",
+  description: "Atualiza t\xEDtulo, descri\xE7\xE3o, entrega, status, links ou arquivamento de uma tarefa pessoal.",
+  inputSchema: {
+    task_id: z9.string().uuid().describe("ID da tarefa."),
+    subject_name: z9.string().trim().min(1).optional().describe("Novo t\xEDtulo da tarefa."),
+    description: z9.string().trim().nullable().optional().describe("Nova descri\xE7\xE3o; null remove o conte\xFAdo."),
+    due_date: dateSchema.optional().describe("Data em YYYY-MM-DD; null remove a data."),
+    status: z9.string().trim().min(1).optional().describe("Nome exato do novo status."),
+    google_docs_link: z9.string().url().nullable().optional().describe("Link do Google Docs; null remove."),
+    canva_link: z9.string().url().nullable().optional().describe("Link do Canva; null remove."),
+    is_archived: z9.boolean().optional().describe("Arquiva ou restaura a tarefa.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async ({ task_id, ...updates }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    if (Object.keys(updates).length === 0) return { content: [{ type: "text", text: "Informe ao menos um campo para atualizar." }], isError: true };
+    const { data, error } = await supabaseForUser(ctx).from("tasks").update(updates).eq("id", task_id).eq("user_id", ctx.getUserId()).select("id, subject_name, description, due_date, status, google_docs_link, canva_link, is_archived, updated_at").single();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { task: data } };
+  }
+});
+
+// src/lib/mcp/tools/create-task-step.ts
+import { defineTool as defineTool11 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z10 } from "npm:zod@^3.25.76";
+var create_task_step_default = defineTool11({
+  name: "create_task_step",
+  title: "Criar etapa de tarefa",
+  description: "Cria uma etapa detalhada em uma tarefa pessoal do usu\xE1rio.",
+  inputSchema: {
+    task_id: z10.string().uuid().describe("ID da tarefa."),
+    title: z10.string().trim().min(1).describe("T\xEDtulo da etapa."),
+    description: z10.string().trim().optional().describe("Descri\xE7\xE3o da etapa."),
+    due_date: z10.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("Data em YYYY-MM-DD."),
+    status: z10.enum(["N\xE3o Iniciado", "Em Progresso", "Conclu\xEDdo"]).optional().describe("Status inicial."),
+    google_docs_link: z10.string().url().optional().describe("Link do Google Docs."),
+    canva_link: z10.string().url().optional().describe("Link do Canva.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async ({ task_id, ...input }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    const supabase = supabaseForUser(ctx);
+    const { data: task, error: taskError } = await supabase.from("tasks").select("id").eq("id", task_id).eq("user_id", ctx.getUserId()).single();
+    if (taskError || !task) return { content: [{ type: "text", text: taskError?.message ?? "Tarefa n\xE3o encontrada" }], isError: true };
+    const { count } = await supabase.from("task_steps").select("id", { count: "exact", head: true }).eq("task_id", task_id);
+    const { data, error } = await supabase.from("task_steps").insert({
+      task_id,
+      title: input.title,
+      description: input.description ?? null,
+      due_date: input.due_date ?? null,
+      status: input.status ?? "N\xE3o Iniciado",
+      google_docs_link: input.google_docs_link ?? null,
+      canva_link: input.canva_link ?? null,
+      order_index: count ?? 0,
+      checklist: []
+    }).select("id, task_id, title, description, due_date, status, google_docs_link, canva_link, order_index").single();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { step: data } };
+  }
+});
+
+// src/lib/mcp/tools/list-planning.ts
+import { defineTool as defineTool12 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z11 } from "npm:zod@^3.25.76";
+var list_planning_default = defineTool12({
+  name: "list_planning",
+  title: "Consultar planejamento",
+  description: "Lista anota\xE7\xF5es, metas e hor\xE1rios do usu\xE1rio, com filtros opcionais de data.",
+  inputSchema: {
+    from_date: z11.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("Data inicial em YYYY-MM-DD."),
+    to_date: z11.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("Data final em YYYY-MM-DD."),
+    include_completed: z11.boolean().optional().describe("Inclui itens conclu\xEDdos. Padr\xE3o: false.")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ from_date, to_date, include_completed }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    const supabase = supabaseForUser(ctx);
+    let notesQuery = supabase.from("planner_notes").select("id, title, content, subject_id, task_id, planned_date, pinned, completed, updated_at").eq("user_id", ctx.getUserId()).order("planned_date");
+    let goalsQuery = supabase.from("planner_goals").select("id, title, description, subject_id, target_date, progress, completed, updated_at").eq("user_id", ctx.getUserId()).order("target_date");
+    if (!include_completed) {
+      notesQuery = notesQuery.eq("completed", false);
+      goalsQuery = goalsQuery.eq("completed", false);
+    }
+    if (from_date) {
+      notesQuery = notesQuery.gte("planned_date", from_date);
+      goalsQuery = goalsQuery.gte("target_date", from_date);
+    }
+    if (to_date) {
+      notesQuery = notesQuery.lte("planned_date", to_date);
+      goalsQuery = goalsQuery.lte("target_date", to_date);
+    }
+    const [notes, goals, schedules] = await Promise.all([
+      notesQuery,
+      goalsQuery,
+      supabase.from("study_schedules").select("id, title, type, day_of_week, specific_date, start_time, end_time, color").eq("user_id", ctx.getUserId()).order("start_time")
+    ]);
+    const error = notes.error ?? goals.error ?? schedules.error;
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    const result = { notes: notes.data ?? [], goals: goals.data ?? [], schedules: schedules.data ?? [] };
+    return { content: [{ type: "text", text: JSON.stringify(result) }], structuredContent: result };
+  }
+});
+
+// src/lib/mcp/tools/update-planning-item.ts
+import { defineTool as defineTool13 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z12 } from "npm:zod@^3.25.76";
+var update_planning_item_default = defineTool13({
+  name: "update_planning_item",
+  title: "Atualizar anota\xE7\xE3o ou meta",
+  description: "Atualiza uma anota\xE7\xE3o ou meta do usu\xE1rio, incluindo progresso e conclus\xE3o.",
+  inputSchema: {
+    item_type: z12.enum(["note", "goal"]).describe("Tipo do item."),
+    item_id: z12.string().uuid().describe("ID da anota\xE7\xE3o ou meta."),
+    title: z12.string().trim().min(1).optional(),
+    description_or_content: z12.string().trim().nullable().optional().describe("Descri\xE7\xE3o da meta ou conte\xFAdo da anota\xE7\xE3o."),
+    date: z12.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional().describe("Data planejada ou data-alvo."),
+    completed: z12.boolean().optional(),
+    progress: z12.number().int().min(0).max(100).optional().describe("Progresso da meta; ignorado em anota\xE7\xF5es."),
+    pinned: z12.boolean().optional().describe("Fixa\xE7\xE3o da anota\xE7\xE3o; ignorada em metas.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async ({ item_type, item_id, description_or_content, date, progress, pinned, ...common }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    const isNote = item_type === "note";
+    const updates = { ...common };
+    if (description_or_content !== void 0) updates[isNote ? "content" : "description"] = description_or_content;
+    if (date !== void 0) updates[isNote ? "planned_date" : "target_date"] = date;
+    if (isNote && pinned !== void 0) updates.pinned = pinned;
+    if (!isNote && progress !== void 0) updates.progress = progress;
+    if (Object.keys(updates).length === 0) return { content: [{ type: "text", text: "Informe ao menos um campo para atualizar." }], isError: true };
+    const table = isNote ? "planner_notes" : "planner_goals";
+    const { data, error } = await supabaseForUser(ctx).from(table).update(updates).eq("id", item_id).eq("user_id", ctx.getUserId()).select().single();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { item: data } };
+  }
+});
+
+// src/lib/mcp/tools/create-study-schedule.ts
+import { defineTool as defineTool14 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z13 } from "npm:zod@^3.25.76";
+var create_study_schedule_default = defineTool14({
+  name: "create_study_schedule",
+  title: "Criar hor\xE1rio no planejamento",
+  description: "Cria um hor\xE1rio fixo semanal ou um evento \xFAnico na agenda do usu\xE1rio.",
+  inputSchema: {
+    title: z13.string().trim().min(1).max(255),
+    type: z13.enum(["fixed", "variable"]).describe("fixed repete semanalmente; variable \xE9 um evento \xFAnico."),
+    day_of_week: z13.number().int().min(0).max(6).describe("Dia da semana: 0 domingo at\xE9 6 s\xE1bado."),
+    start_time: z13.string().regex(/^\d{2}:\d{2}$/),
+    end_time: z13.string().regex(/^\d{2}:\d{2}$/),
+    specific_date: z13.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("Obrigat\xF3ria para evento variable."),
+    color: z13.string().regex(/^#[0-9A-Fa-f]{6}$/).optional()
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async (input, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    if (input.start_time >= input.end_time) return { content: [{ type: "text", text: "O hor\xE1rio final deve ser posterior ao inicial." }], isError: true };
+    if (input.type === "variable" && !input.specific_date) return { content: [{ type: "text", text: "Eventos \xFAnicos exigem specific_date." }], isError: true };
+    const { data, error } = await supabaseForUser(ctx).from("study_schedules").insert({ ...input, specific_date: input.type === "variable" ? input.specific_date : null, user_id: ctx.getUserId() }).select().single();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { schedule: data } };
+  }
+});
+
+// src/lib/mcp/tools/register-study-session.ts
+import { defineTool as defineTool15 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z14 } from "npm:zod@^3.25.76";
+var register_study_session_default = defineTool15({
+  name: "register_study_session",
+  title: "Registrar estudo",
+  description: "Registra uma sess\xE3o de estudo com dura\xE7\xE3o, disciplina, quest\xF5es, assunto e avalia\xE7\xE3o.",
+  inputSchema: {
+    started_at: z14.string().datetime().describe("In\xEDcio em ISO 8601 com fuso hor\xE1rio."),
+    duration_minutes: z14.number().int().min(1).max(1440),
+    subject_id: z14.string().uuid().optional(),
+    study_cycle_id: z14.string().uuid().optional(),
+    source: z14.enum(["manual", "pomodoro", "cycle"]).optional(),
+    questions_total: z14.number().int().min(0).optional(),
+    questions_correct: z14.number().int().min(0).optional(),
+    topic: z14.string().trim().max(500).optional(),
+    notes: z14.string().trim().max(5e3).optional(),
+    rating: z14.number().int().min(1).max(5).optional()
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async (input, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    const total = input.questions_total ?? 0;
+    const correct = input.questions_correct ?? 0;
+    if (correct > total) return { content: [{ type: "text", text: "Acertos n\xE3o podem superar o total de quest\xF5es." }], isError: true };
+    const started = new Date(input.started_at);
+    const ended = new Date(started.getTime() + input.duration_minutes * 6e4);
+    const { data, error } = await supabaseForUser(ctx).from("focus_sessions").insert({
+      user_id: ctx.getUserId(),
+      started_at: started.toISOString(),
+      ended_at: ended.toISOString(),
+      duration_minutes: input.duration_minutes,
+      subject_id: input.subject_id ?? null,
+      study_cycle_id: input.study_cycle_id ?? null,
+      source: input.source ?? (input.study_cycle_id ? "cycle" : "manual"),
+      questions_total: total,
+      questions_correct: correct,
+      topic: input.topic ?? null,
+      notes: input.notes ?? null,
+      rating: input.rating ?? null
+    }).select("id, started_at, ended_at, duration_minutes, subject_id, study_cycle_id, source, questions_total, questions_correct, topic, notes, rating").single();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { session: data } };
+  }
+});
+
+// src/lib/mcp/tools/get-study-performance.ts
+import { defineTool as defineTool16 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z15 } from "npm:zod@^3.25.76";
+var get_study_performance_default = defineTool16({
+  name: "get_study_performance",
+  title: "Consultar desempenho de estudos",
+  description: "Resume tempo, sess\xF5es, quest\xF5es, acertos e desempenho por disciplina em um per\xEDodo.",
+  inputSchema: {
+    from_date: z15.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Data inicial em YYYY-MM-DD."),
+    to_date: z15.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Data final em YYYY-MM-DD."),
+    subject_id: z15.string().uuid().optional(),
+    study_cycle_id: z15.string().uuid().optional()
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ from_date, to_date, subject_id, study_cycle_id }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    let query = supabaseForUser(ctx).from("focus_sessions").select("id, duration_minutes, questions_total, questions_correct, rating, topic, source, subject_id, subjects(name), study_cycle_id, study_cycles(name)").eq("user_id", ctx.getUserId()).gte("started_at", `${from_date}T00:00:00-03:00`).lte("started_at", `${to_date}T23:59:59.999-03:00`);
+    if (subject_id) query = query.eq("subject_id", subject_id);
+    if (study_cycle_id) query = query.eq("study_cycle_id", study_cycle_id);
+    const { data, error } = await query;
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    const rows = data ?? [];
+    const bySubject = {};
+    let minutes = 0, questions = 0, correct = 0, ratingSum = 0, ratingCount = 0;
+    for (const row of rows) {
+      const q = row.questions_total ?? 0;
+      const c = Math.min(q, row.questions_correct ?? 0);
+      minutes += row.duration_minutes ?? 0;
+      questions += q;
+      correct += c;
+      if (row.rating) {
+        ratingSum += row.rating;
+        ratingCount += 1;
+      }
+      const relation = row.subjects;
+      const key = row.subject_id ?? "sem-disciplina";
+      const current = bySubject[key] ?? { subject_id: row.subject_id, name: relation?.name ?? "Sem disciplina", minutes: 0, sessions: 0, questions: 0, correct: 0, accuracy: null };
+      current.minutes += row.duration_minutes ?? 0;
+      current.sessions += 1;
+      current.questions += q;
+      current.correct += c;
+      current.accuracy = current.questions ? current.correct / current.questions * 100 : null;
+      bySubject[key] = current;
+    }
+    const result = { period: { from: from_date, to: to_date }, total_minutes: minutes, sessions: rows.length, questions, correct, accuracy: questions ? correct / questions * 100 : null, average_rating: ratingCount ? ratingSum / ratingCount : null, by_subject: Object.values(bySubject).sort((a, b) => b.minutes - a.minutes) };
+    return { content: [{ type: "text", text: JSON.stringify(result) }], structuredContent: result };
+  }
+});
+
+// src/lib/mcp/tools/create-study-cycle.ts
+import { defineTool as defineTool17 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z16 } from "npm:zod@^3.25.76";
+var blockSchema = z16.object({ subject_id: z16.string().uuid(), allocated_minutes: z16.number().int().min(1).max(1440) });
+var create_study_cycle_default = defineTool17({
+  name: "create_study_cycle",
+  title: "Criar ciclo de estudos",
+  description: "Cria um ciclo com disciplinas, tempos e planejamento temporal opcional.",
+  inputSchema: {
+    name: z16.string().trim().min(1).max(255),
+    blocks: z16.array(blockSchema).min(1).describe("Blocos na ordem em que ser\xE3o estudados."),
+    start_date: z16.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    end_date: z16.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    hours_per_day: z16.number().positive().max(24).optional(),
+    hours_per_week: z16.number().positive().max(168).optional(),
+    activate: z16.boolean().optional().describe("Ativa este ciclo e desativa os demais.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async ({ blocks, activate, ...cycleInput }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    if (cycleInput.start_date && cycleInput.end_date && cycleInput.end_date < cycleInput.start_date) return { content: [{ type: "text", text: "A data final deve ser posterior \xE0 inicial." }], isError: true };
+    const supabase = supabaseForUser(ctx);
+    const ids = [...new Set(blocks.map((block) => block.subject_id))];
+    const { data: subjects, error: subjectError } = await supabase.from("subjects").select("id").eq("user_id", ctx.getUserId()).eq("is_active", true).in("id", ids);
+    if (subjectError || (subjects?.length ?? 0) !== ids.length) return { content: [{ type: "text", text: subjectError?.message ?? "Use apenas disciplinas ativas da sua conta." }], isError: true };
+    if (activate) {
+      const { error: error2 } = await supabase.from("study_cycles").update({ is_active: false }).eq("user_id", ctx.getUserId());
+      if (error2) return { content: [{ type: "text", text: error2.message }], isError: true };
+    }
+    const { data: cycle, error } = await supabase.from("study_cycles").insert({ ...cycleInput, user_id: ctx.getUserId(), is_active: activate ?? false }).select("id, name, is_active, start_date, end_date, hours_per_day, hours_per_week").single();
+    if (error || !cycle) return { content: [{ type: "text", text: error?.message ?? "N\xE3o foi poss\xEDvel criar o ciclo." }], isError: true };
+    const { data: createdBlocks, error: blocksError } = await supabase.from("study_cycle_blocks").insert(blocks.map((block, index) => ({ cycle_id: cycle.id, ...block, order_index: index }))).select("id, subject_id, allocated_minutes, order_index");
+    if (blocksError) {
+      await supabase.from("study_cycles").delete().eq("id", cycle.id).eq("user_id", ctx.getUserId());
+      return { content: [{ type: "text", text: blocksError.message }], isError: true };
+    }
+    const result = { ...cycle, blocks: createdBlocks ?? [] };
+    return { content: [{ type: "text", text: JSON.stringify(result) }], structuredContent: { cycle: result } };
+  }
+});
+
+// src/lib/mcp/tools/update-study-cycle.ts
+import { defineTool as defineTool18 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z17 } from "npm:zod@^3.25.76";
+var update_study_cycle_default = defineTool18({
+  name: "update_study_cycle",
+  title: "Atualizar ciclo de estudos",
+  description: "Atualiza nome, datas, dedica\xE7\xE3o planejada ou estado ativo de um ciclo do usu\xE1rio.",
+  inputSchema: {
+    cycle_id: z17.string().uuid(),
+    name: z17.string().trim().min(1).max(255).optional(),
+    start_date: z17.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+    end_date: z17.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+    hours_per_day: z17.number().positive().max(24).nullable().optional(),
+    hours_per_week: z17.number().positive().max(168).nullable().optional(),
+    is_active: z17.boolean().optional()
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async ({ cycle_id, is_active, ...updates }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "N\xE3o autenticado" }], isError: true };
+    const patch = { ...updates };
+    if (is_active !== void 0) patch.is_active = is_active;
+    if (Object.keys(patch).length === 0) return { content: [{ type: "text", text: "Informe ao menos um campo para atualizar." }], isError: true };
+    const supabase = supabaseForUser(ctx);
+    if (is_active) {
+      const { error: error2 } = await supabase.from("study_cycles").update({ is_active: false }).eq("user_id", ctx.getUserId()).neq("id", cycle_id);
+      if (error2) return { content: [{ type: "text", text: error2.message }], isError: true };
+    }
+    const { data, error } = await supabase.from("study_cycles").update(patch).eq("id", cycle_id).eq("user_id", ctx.getUserId()).select("id, name, is_active, start_date, end_date, hours_per_day, hours_per_week, current_block_index").single();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { cycle: data } };
+  }
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "vxsahhwkgnynxwpjsxaj";
 var mcp_default = defineMcp({
-  name: "zenit-mcp",
-  title: "Zenit MCP",
-  version: "0.1.0",
-  instructions: "Tools for Zenit, a study, focus and productivity app. Use `list_tasks` and `create_task` to manage tasks, `list_study_cycles` to inspect study cycles, `get_leaderboard` to read the XP ranking, `create_subject` to create disciplines, `create_note` to add notes, and `create_goal` to set study goals.",
+  name: "zenit-io",
+  title: "zenit-io",
+  version: "0.2.0",
+  instructions: "Ferramentas do Zenit para gerenciar tarefas e etapas, planejamento, disciplinas, ciclos, sess\xF5es de estudo e desempenho. Antes de criar v\xEDnculos, use as ferramentas de listagem para localizar IDs v\xE1lidos do usu\xE1rio autenticado.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
   }),
-  tools: [list_tasks_default, create_task_default, list_study_cycles_default, get_leaderboard_default, create_subject_default, create_note_default, create_goal_default]
+  tools: [
+    list_tasks_default,
+    get_task_details_default,
+    create_task_default,
+    update_task_default,
+    create_task_step_default,
+    list_subjects_default,
+    create_subject_default,
+    list_planning_default,
+    create_note_default,
+    create_goal_default,
+    update_planning_item_default,
+    create_study_schedule_default,
+    list_study_cycles_default,
+    create_study_cycle_default,
+    update_study_cycle_default,
+    register_study_session_default,
+    get_study_performance_default,
+    get_leaderboard_default
+  ]
 });
 
 // lovable-mcp-supabase-entry.ts

@@ -1,6 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { supabaseForUser } from "../supabase-for-user";
+import { supabaseForUser } from "../supabase";
 
 export default defineTool({
   name: "create_task",
@@ -26,9 +26,11 @@ export default defineTool({
       .string()
       .optional()
       .describe("Optional status name. Defaults to the app's default status."),
+    google_docs_link: z.string().url().optional().describe("Optional Google Docs link."),
+    canva_link: z.string().url().optional().describe("Optional Canva link."),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-  handler: async ({ subject_name, description, due_date, status }, ctx) => {
+  handler: async ({ subject_name, description, due_date, status, google_docs_link, canva_link }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -39,11 +41,13 @@ export default defineTool({
     if (description) insert.description = description;
     if (due_date) insert.due_date = due_date;
     if (status) insert.status = status;
+    if (google_docs_link) insert.google_docs_link = google_docs_link;
+    if (canva_link) insert.canva_link = canva_link;
 
     const { data, error } = await supabaseForUser(ctx)
       .from("tasks")
       .insert(insert)
-      .select("id, subject_name, status, due_date")
+      .select("id, subject_name, description, status, due_date, google_docs_link, canva_link")
       .single();
 
     if (error) {
