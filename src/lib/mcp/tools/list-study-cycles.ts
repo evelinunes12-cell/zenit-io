@@ -1,5 +1,5 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { supabaseForUser } from "../supabase-for-user";
+import { supabaseForUser } from "../supabase";
 
 export default defineTool({
   name: "list_study_cycles",
@@ -15,7 +15,7 @@ export default defineTool({
     const { data, error } = await supabaseForUser(ctx)
       .from("study_cycles")
       .select(
-        "id, name, is_active, start_date, end_date, study_cycle_blocks(allocated_minutes, order_index, subjects(name))",
+        "id, name, is_active, start_date, end_date, hours_per_day, hours_per_week, current_block_index, current_block_elapsed_time, study_cycle_blocks(id, subject_id, allocated_minutes, order_index, subjects(name, color))",
       )
       .eq("user_id", ctx.getUserId())
       .order("created_at", { ascending: false });
