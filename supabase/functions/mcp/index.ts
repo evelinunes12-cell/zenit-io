@@ -144,18 +144,135 @@ var get_leaderboard_default = defineTool4({
   }
 });
 
+// src/lib/mcp/tools/create-subject.ts
+import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z4 } from "npm:zod@^3.25.76";
+var create_subject_default = defineTool5({
+  name: "create_subject",
+  title: "Create subject",
+  description: "Create a new subject (discipline) for the signed-in user via the app's database.",
+  inputSchema: {
+    name: z4.string().trim().min(1).describe("Name of the subject (discipline)."),
+    color: z4.string().optional().describe("Optional color for the subject (e.g., '#FF5733' or 'blue')."),
+    is_active: z4.boolean().optional().describe("Whether the subject is active. Defaults to true.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async ({ name, color, is_active }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const insert = {
+      user_id: ctx.getUserId(),
+      name,
+      color: color || null,
+      is_active: is_active !== false
+    };
+    const { data, error } = await supabaseForUser(ctx).from("subjects").insert(insert).select("id, name, color, is_active, created_at").single();
+    if (error) {
+      return { content: [{ type: "text", text: error.message }], isError: true };
+    }
+    return {
+      content: [{ type: "text", text: JSON.stringify(data) }],
+      structuredContent: { subject: data }
+    };
+  }
+});
+
+// src/lib/mcp/tools/create-note.ts
+import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z5 } from "npm:zod@^3.25.76";
+var create_note_default = defineTool6({
+  name: "create_note",
+  title: "Create note",
+  description: "Create a new note for the signed-in user via the app's database. Notes can be linked to subjects and scheduled for specific dates.",
+  inputSchema: {
+    title: z5.string().trim().min(1).describe("Title of the note."),
+    content: z5.string().trim().min(1).describe("Content/text of the note."),
+    subject_id: z5.string().optional().describe("Optional subject ID to associate the note with."),
+    task_id: z5.string().optional().describe("Optional task ID to associate the note with."),
+    planned_date: z5.string().optional().describe("Optional date when the note is planned (YYYY-MM-DD format)."),
+    color: z5.string().optional().describe("Optional color for the note."),
+    pinned: z5.boolean().optional().describe("Whether the note is pinned. Defaults to false.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async ({ title, content, subject_id, task_id, planned_date, color, pinned }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const insert = {
+      user_id: ctx.getUserId(),
+      title,
+      content,
+      subject_id: subject_id || null,
+      task_id: task_id || null,
+      planned_date: planned_date || null,
+      color: color || null,
+      pinned: pinned || false,
+      completed: false
+    };
+    const { data, error } = await supabaseForUser(ctx).from("planner_notes").insert(insert).select("id, title, content, subject_id, task_id, planned_date, color, pinned, completed, created_at").single();
+    if (error) {
+      return { content: [{ type: "text", text: error.message }], isError: true };
+    }
+    return {
+      content: [{ type: "text", text: JSON.stringify(data) }],
+      structuredContent: { note: data }
+    };
+  }
+});
+
+// src/lib/mcp/tools/create-goal.ts
+import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z6 } from "npm:zod@^3.25.76";
+var create_goal_default = defineTool7({
+  name: "create_goal",
+  title: "Create goal",
+  description: "Create a new goal (meta) for the signed-in user via the app's database. Goals can be linked to subjects and have a target date and progress tracking.",
+  inputSchema: {
+    title: z6.string().trim().min(1).describe("Title of the goal."),
+    description: z6.string().trim().optional().describe("Optional detailed description of the goal."),
+    subject_id: z6.string().optional().describe("Optional subject ID to associate the goal with."),
+    target_date: z6.string().optional().describe("Optional target date for completing the goal (YYYY-MM-DD format)."),
+    progress: z6.number().int().min(0).max(100).optional().describe("Initial progress percentage (0-100). Defaults to 0."),
+    completed: z6.boolean().optional().describe("Whether the goal is completed. Defaults to false.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async ({ title, description, subject_id, target_date, progress, completed }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const insert = {
+      user_id: ctx.getUserId(),
+      title,
+      description: description || null,
+      subject_id: subject_id || null,
+      target_date: target_date || null,
+      progress: progress ?? 0,
+      completed: completed || false
+    };
+    const { data, error } = await supabaseForUser(ctx).from("planner_goals").insert(insert).select("id, title, description, subject_id, target_date, progress, completed, created_at").single();
+    if (error) {
+      return { content: [{ type: "text", text: error.message }], isError: true };
+    }
+    return {
+      content: [{ type: "text", text: JSON.stringify(data) }],
+      structuredContent: { goal: data }
+    };
+  }
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "vxsahhwkgnynxwpjsxaj";
 var mcp_default = defineMcp({
   name: "zenit-mcp",
   title: "Zenit MCP",
   version: "0.1.0",
-  instructions: "Tools for Zenit, a study, focus and productivity app. Use `list_tasks` and `create_task` to manage the signed-in user's tasks, `list_study_cycles` to inspect their study cycles, and `get_leaderboard` to read the XP ranking.",
+  instructions: "Tools for Zenit, a study, focus and productivity app. Use `list_tasks` and `create_task` to manage tasks, `list_study_cycles` to inspect study cycles, `get_leaderboard` to read the XP ranking, `create_subject` to create disciplines, `create_note` to add notes, and `create_goal` to set study goals.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
   }),
-  tools: [list_tasks_default, create_task_default, list_study_cycles_default, get_leaderboard_default]
+  tools: [list_tasks_default, create_task_default, list_study_cycles_default, get_leaderboard_default, create_subject_default, create_note_default, create_goal_default]
 });
 
 // lovable-mcp-supabase-entry.ts

@@ -135,6 +135,140 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "create_subject",
+        "title": "Create subject",
+        "description": "Create a new subject (discipline) for the signed-in user via the app's database.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name of the subject (discipline)."
+            },
+            "color": {
+              "type": "string",
+              "description": "Optional color for the subject (e.g., '#FF5733' or 'blue')."
+            },
+            "is_active": {
+              "type": "boolean",
+              "description": "Whether the subject is active. Defaults to true."
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_note",
+        "title": "Create note",
+        "description": "Create a new note for the signed-in user via the app's database. Notes can be linked to subjects and scheduled for specific dates.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Title of the note."
+            },
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Content/text of the note."
+            },
+            "subject_id": {
+              "type": "string",
+              "description": "Optional subject ID to associate the note with."
+            },
+            "task_id": {
+              "type": "string",
+              "description": "Optional task ID to associate the note with."
+            },
+            "planned_date": {
+              "type": "string",
+              "description": "Optional date when the note is planned (YYYY-MM-DD format)."
+            },
+            "color": {
+              "type": "string",
+              "description": "Optional color for the note."
+            },
+            "pinned": {
+              "type": "boolean",
+              "description": "Whether the note is pinned. Defaults to false."
+            }
+          },
+          "required": [
+            "title",
+            "content"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_goal",
+        "title": "Create goal",
+        "description": "Create a new goal (meta) for the signed-in user via the app's database. Goals can be linked to subjects and have a target date and progress tracking.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Title of the goal."
+            },
+            "description": {
+              "type": "string",
+              "description": "Optional detailed description of the goal."
+            },
+            "subject_id": {
+              "type": "string",
+              "description": "Optional subject ID to associate the goal with."
+            },
+            "target_date": {
+              "type": "string",
+              "description": "Optional target date for completing the goal (YYYY-MM-DD format)."
+            },
+            "progress": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Initial progress percentage (0-100). Defaults to 0."
+            },
+            "completed": {
+              "type": "boolean",
+              "description": "Whether the goal is completed. Defaults to false."
+            }
+          },
+          "required": [
+            "title"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }
