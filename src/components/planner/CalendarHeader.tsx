@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, addMonths, subMonths, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { BookOpen } from "lucide-react";
 
 export type PlannerView = "month" | "week" | "notes" | "goals";
 
@@ -64,7 +63,7 @@ export function CalendarHeader({
         )}
       </div>
 
-      <div className="flex rounded-lg border bg-muted p-0.5">
+      <div className="flex max-w-full overflow-x-auto rounded-lg border bg-muted p-0.5 scrollbar-none">
         {VIEW_OPTIONS.map((opt) => (
           <button
             key={opt.value}

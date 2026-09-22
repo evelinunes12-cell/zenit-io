@@ -191,9 +191,6 @@ function NotebookInfoSheet({ notebook, onOpenChange, onEdit }: { notebook: Noteb
                 <h3 className="text-sm font-medium">Descrição</h3>
                 <p className="mt-2 break-words text-sm text-muted-foreground">{notebook.description || "Nenhuma descrição adicionada."}</p>
               </div>
-              <div className="border-t pt-5">
-                <p className="text-sm text-muted-foreground">Este caderno está pronto para receber páginas nas próximas etapas.</p>
-              </div>
               <Button onClick={() => onEdit(notebook)} variant="outline" className="w-full">Editar informações</Button>
             </div>
           </>
