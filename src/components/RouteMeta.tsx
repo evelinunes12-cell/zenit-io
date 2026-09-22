@@ -44,6 +44,10 @@ const EXACT_META: Record<string, Meta> = {
     description:
       "Organize aulas, compromissos, metas e anotações em um calendário unificado de estudos.",
   },
+  "/planner/cadernos": {
+    title: `Cadernos — ${SITE_NAME}`,
+    description: "Crie e organize cadernos pessoais para seus conteúdos acadêmicos no Zenit.",
+  },
   "/reports": {
     title: `Relatórios — ${SITE_NAME}`,
     description: "Acompanhe conclusão de tarefas, produtividade e evolução acadêmica ao longo do tempo.",

@@ -3,6 +3,7 @@
 const routeImports: Record<string, () => Promise<unknown>> = {
   "/dashboard": () => import("@/pages/Dashboard"),
   "/planner": () => import("@/pages/Planner"),
+  "/planner/cadernos": () => import("@/pages/NotebooksPage"),
   "/shared-environments": () => import("@/pages/SharedEnvironments"),
   "/subjects": () => import("@/pages/Subjects"),
   "/task-statuses": () => import("@/pages/TaskStatuses"),

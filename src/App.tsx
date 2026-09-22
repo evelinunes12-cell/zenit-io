@@ -33,6 +33,7 @@ const EnvironmentDetail = lazy(() => import("./pages/EnvironmentDetail"));
 const Reports = lazy(() => import("./pages/Reports"));
 const ArchivedTasks = lazy(() => import("./pages/ArchivedTasks"));
 const Planner = lazy(() => import("./pages/Planner"));
+const NotebooksPage = lazy(() => import("./pages/NotebooksPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Support = lazy(() => import("./pages/Support"));
@@ -84,7 +85,7 @@ const SidebarShell = ({ children }: { children: React.ReactNode }) => {
     pathname === "/shared-environments" ||
     pathname === "/reports" ||
     pathname === "/archived" ||
-    pathname === "/planner" ||
+    (pathname === "/planner" || pathname.startsWith("/planner/")) ||
     pathname === "/ranking" ||
     pathname === "/connect" ||
     pathname === "/task/new" ||
@@ -163,6 +164,7 @@ const App = () => {
                         <Route path="/reports" element={<ProtectedRoute><PageTransition><Reports /></PageTransition></ProtectedRoute>} />
                         <Route path="/archived" element={<ProtectedRoute><PageTransition><ArchivedTasks /></PageTransition></ProtectedRoute>} />
                         <Route path="/planner" element={<ProtectedRoute><PageTransition><Planner /></PageTransition></ProtectedRoute>} />
+                         <Route path="/planner/cadernos" element={<ProtectedRoute><PageTransition><NotebooksPage /></PageTransition></ProtectedRoute>} />
                         <Route path="/ranking" element={<ProtectedRoute><PageTransition><RankingPage /></PageTransition></ProtectedRoute>} />
                         <Route path="/environment/new" element={<ProtectedRoute><PageTransition><EnvironmentForm /></PageTransition></ProtectedRoute>} />
                         <Route path="/environment/:id/edit" element={<ProtectedRoute><PageTransition><EnvironmentForm /></PageTransition></ProtectedRoute>} />
