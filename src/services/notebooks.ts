@@ -11,6 +11,7 @@ export interface Notebook {
   created_at: string;
   updated_at: string;
   subject?: { name: string; color: string | null } | null;
+  page_count: number;
 }
 
 export interface NotebookInput {
@@ -21,7 +22,14 @@ export interface NotebookInput {
   subject_id: string | null;
 }
 
-const NOTEBOOK_SELECT = "id, user_id, title, description, icon, color, subject_id, created_at, updated_at, subject:subjects(name, color)";
+const NOTEBOOK_SELECT = "id, user_id, title, description, icon, color, subject_id, created_at, updated_at, subject:subjects(name, color), notebook_pages(count)";
+
+type NotebookQueryRow = Omit<Notebook, "page_count"> & { notebook_pages?: Array<{ count: number }> };
+
+const mapNotebook = (row: NotebookQueryRow): Notebook => {
+  const { notebook_pages, ...notebook } = row;
+  return { ...notebook, page_count: notebook_pages?.[0]?.count ?? 0 };
+};
 
 export const fetchNotebooks = async (userId: string) => {
   const { data, error } = await supabase
@@ -31,7 +39,19 @@ export const fetchNotebooks = async (userId: string) => {
     .order("updated_at", { ascending: false });
 
   if (error) throw error;
-  return data as Notebook[];
+  return (data as unknown as NotebookQueryRow[]).map(mapNotebook);
+};
+
+export const fetchNotebook = async (userId: string, notebookId: string) => {
+  const { data, error } = await supabase
+    .from("notebooks")
+    .select(NOTEBOOK_SELECT)
+    .eq("id", notebookId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapNotebook(data as unknown as NotebookQueryRow) : null;
 };
 
 export const createNotebook = async (userId: string, input: NotebookInput) => {
@@ -45,7 +65,7 @@ export const createNotebook = async (userId: string, input: NotebookInput) => {
     .single();
 
   if (error) throw error;
-  return data as Notebook;
+  return mapNotebook(data as unknown as NotebookQueryRow);
 };
 
 export const updateNotebook = async (userId: string, id: string, input: NotebookInput) => {
@@ -61,7 +81,7 @@ export const updateNotebook = async (userId: string, id: string, input: Notebook
     .single();
 
   if (error) throw error;
-  return data as Notebook;
+  return mapNotebook(data as unknown as NotebookQueryRow);
 };
 
 export const deleteNotebook = async (userId: string, id: string) => {
