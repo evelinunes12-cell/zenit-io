@@ -8,8 +8,8 @@
 
 ## Cadernos 1.1 — Páginas
 
-- [ ] Criar estrutura segura de páginas no banco
-- [ ] Criar serviço e componentes compartilhados de páginas
-- [ ] Criar experiência interna navegável do caderno
-- [ ] Exibir contagem real de páginas sem consultas individuais
-- [ ] Validar CRUD, segurança, estados e responsividade
+- [x] Criar estrutura segura de páginas no banco
+- [x] Criar serviço e componentes compartilhados de páginas
+- [x] Criar experiência interna navegável do caderno
+- [x] Exibir contagem real de páginas sem consultas individuais
+- [x] Validar CRUD, segurança, estados e responsividade

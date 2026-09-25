@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { BookOpen, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { BookOpen, FileText, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,7 +38,10 @@ export function NotebookCard({ notebook, onOpen, onEdit, onDelete }: NotebookCar
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-semibold text-foreground">{notebook.title}</span>
-                <span className="mt-1 block text-xs font-normal text-muted-foreground">Atualizado {updatedLabel}</span>
+                <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-normal text-muted-foreground">
+                  <span className="inline-flex items-center gap-1"><FileText className="h-3.5 w-3.5" />{notebook.page_count} {notebook.page_count === 1 ? "página" : "páginas"}</span>
+                  <span>Atualizado {updatedLabel}</span>
+                </span>
               </span>
             </Button>
 
