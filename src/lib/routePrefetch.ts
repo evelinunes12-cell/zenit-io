@@ -27,7 +27,9 @@ const prefetched = new Set<string>();
 
 export const prefetchRoute = (path: string) => {
   if (prefetched.has(path)) return;
-  const loader = routeImports[path];
+  const loader = path.startsWith("/planner/cadernos/")
+    ? () => import("@/pages/NotebookDetailPage")
+    : routeImports[path];
   if (!loader) return;
   prefetched.add(path);
   // Fire-and-forget; failures are silent (the user-facing nav will retry).

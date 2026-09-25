@@ -34,6 +34,7 @@ const Reports = lazy(() => import("./pages/Reports"));
 const ArchivedTasks = lazy(() => import("./pages/ArchivedTasks"));
 const Planner = lazy(() => import("./pages/Planner"));
 const NotebooksPage = lazy(() => import("./pages/NotebooksPage"));
+const NotebookDetailPage = lazy(() => import("./pages/NotebookDetailPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Support = lazy(() => import("./pages/Support"));
@@ -165,6 +166,7 @@ const App = () => {
                         <Route path="/archived" element={<ProtectedRoute><PageTransition><ArchivedTasks /></PageTransition></ProtectedRoute>} />
                         <Route path="/planner" element={<ProtectedRoute><PageTransition><Planner /></PageTransition></ProtectedRoute>} />
                          <Route path="/planner/cadernos" element={<ProtectedRoute><PageTransition><NotebooksPage /></PageTransition></ProtectedRoute>} />
+                         <Route path="/planner/cadernos/:id" element={<ProtectedRoute><PageTransition><NotebookDetailPage /></PageTransition></ProtectedRoute>} />
                         <Route path="/ranking" element={<ProtectedRoute><PageTransition><RankingPage /></PageTransition></ProtectedRoute>} />
                         <Route path="/environment/new" element={<ProtectedRoute><PageTransition><EnvironmentForm /></PageTransition></ProtectedRoute>} />
                         <Route path="/environment/:id/edit" element={<ProtectedRoute><PageTransition><EnvironmentForm /></PageTransition></ProtectedRoute>} />

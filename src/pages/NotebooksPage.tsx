@@ -7,23 +7,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { NotebookCard } from "@/components/notebooks/NotebookCard";
 import { NotebookDialog } from "@/components/notebooks/NotebookDialog";
 import { CreateNotebookDialog } from "@/components/notebooks/CreateNotebookDialog";
-import { getNotebookAccent } from "@/components/notebooks/notebookAppearance";
 import { useAuth } from "@/hooks/useAuth";
 import { deleteNotebook, fetchNotebooks, updateNotebook, type Notebook, type NotebookInput } from "@/services/notebooks";
-import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function NotebooksPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [editingNotebook, setEditingNotebook] = useState<Notebook | null>(null);
-  const [selectedNotebook, setSelectedNotebook] = useState<Notebook | null>(null);
   const [deletingNotebook, setDeletingNotebook] = useState<Notebook | null>(null);
 
   const notebooksQuery = useQuery({
@@ -40,7 +37,6 @@ export default function NotebooksPage() {
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ["notebooks"] });
       setEditingNotebook(null);
-      setSelectedNotebook((current) => current?.id === updated.id ? updated : current);
       toast.success("Caderno atualizado!");
     },
     onError: () => toast.error("Erro ao atualizar caderno"),
@@ -54,7 +50,6 @@ export default function NotebooksPage() {
     onSuccess: (_result, id) => {
       queryClient.invalidateQueries({ queryKey: ["notebooks"] });
       setDeletingNotebook(null);
-      setSelectedNotebook((current) => current?.id === id ? null : current);
       toast.success("Caderno excluído!");
     },
     onError: () => toast.error("Erro ao excluir caderno"),
@@ -124,7 +119,7 @@ export default function NotebooksPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredNotebooks.map((notebook) => (
-              <NotebookCard key={notebook.id} notebook={notebook} onOpen={setSelectedNotebook} onEdit={setEditingNotebook} onDelete={setDeletingNotebook} />
+              <NotebookCard key={notebook.id} notebook={notebook} onOpen={(item) => navigate(`/planner/cadernos/${item.id}`)} onEdit={setEditingNotebook} onDelete={setDeletingNotebook} />
             ))}
           </div>
         )}
@@ -138,8 +133,6 @@ export default function NotebooksPage() {
         onSave={(input) => { if (editingNotebook) updateMutation.mutate({ id: editingNotebook.id, input }); }}
         isSaving={updateMutation.isPending}
       />
-
-      <NotebookInfoSheet notebook={selectedNotebook} onOpenChange={(open) => { if (!open) setSelectedNotebook(null); }} onEdit={(notebook) => { setSelectedNotebook(null); setEditingNotebook(notebook); }} />
 
       <AlertDialog open={!!deletingNotebook} onOpenChange={(open) => { if (!open) setDeletingNotebook(null); }}>
         <AlertDialogContent>
@@ -171,31 +164,5 @@ function EmptyContent({ icon: Icon, title, description, actionLabel, onAction }:
       <p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
       {actionLabel && onAction && <Button onClick={onAction} className="mt-5 gap-2"><Plus className="h-4 w-4" />{actionLabel}</Button>}
     </div>
-  );
-}
-
-function NotebookInfoSheet({ notebook, onOpenChange, onEdit }: { notebook: Notebook | null; onOpenChange: (open: boolean) => void; onEdit: (notebook: Notebook) => void }) {
-  const accent = getNotebookAccent(notebook?.color);
-  return (
-    <Sheet open={!!notebook} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-        {notebook && (
-          <>
-            <SheetHeader className="pr-6 text-left">
-              <span className={cn("mb-3 flex h-14 w-14 items-center justify-center rounded-lg text-2xl", accent.background, accent.text)}>{notebook.icon || <BookOpen className="h-6 w-6" />}</span>
-              <SheetTitle className="break-words text-2xl">{notebook.title}</SheetTitle>
-              <SheetDescription>{notebook.subject?.name || "Sem disciplina relacionada"}</SheetDescription>
-            </SheetHeader>
-            <div className="mt-6 space-y-6">
-              <div>
-                <h3 className="text-sm font-medium">Descrição</h3>
-                <p className="mt-2 break-words text-sm text-muted-foreground">{notebook.description || "Nenhuma descrição adicionada."}</p>
-              </div>
-              <Button onClick={() => onEdit(notebook)} variant="outline" className="w-full">Editar informações</Button>
-            </div>
-          </>
-        )}
-      </SheetContent>
-    </Sheet>
   );
 }
