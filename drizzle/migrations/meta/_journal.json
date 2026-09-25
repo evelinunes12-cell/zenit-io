@@ -15,6 +15,13 @@
       "when": 1790353755502,
       "tag": "0001_create_notebook_pages",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790353823357,
+      "tag": "0002_protect_notebook_page_structure",
+      "breakpoints": true
     }
   ]
 }
