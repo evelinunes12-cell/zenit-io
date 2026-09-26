@@ -8,23 +8,26 @@ import type { NotebookPage } from "@/services/notebookPages";
 
 interface NotebookPageCardProps {
   page: NotebookPage;
+  onOpen: (page: NotebookPage) => void;
   onEdit: (page: NotebookPage) => void;
   onDelete: (page: NotebookPage) => void;
 }
 
-export function NotebookPageCard({ page, onEdit, onDelete }: NotebookPageCardProps) {
+export function NotebookPageCard({ page, onOpen, onEdit, onDelete }: NotebookPageCardProps) {
   const updatedLabel = formatDistanceToNow(new Date(page.updated_at), { addSuffix: true, locale: ptBR });
 
   return (
     <Card className="min-w-0 transition-shadow hover:shadow-sm">
       <CardContent className="flex min-w-0 items-center gap-3 p-4">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-          <FileText className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-medium text-foreground">{page.title}</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Atualizada {updatedLabel}</p>
-        </div>
+        <Button type="button" variant="ghost" onClick={() => onOpen(page)} className="h-auto min-w-0 flex-1 justify-start gap-3 p-0 text-left hover:bg-transparent" aria-label={`Abrir página ${page.title}`}>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <FileText className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium text-foreground">{page.title}</span>
+            <span className="mt-1 block text-xs font-normal text-muted-foreground">Atualizada {updatedLabel}</span>
+          </span>
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label={`Ações de ${page.title}`}>

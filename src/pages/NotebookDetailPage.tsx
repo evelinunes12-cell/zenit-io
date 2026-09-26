@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, FilePlus2, FileText, Pencil, Plus, RefreshCw } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { createNotebookPage, deleteNotebookPage, fetchNotebookPages, updateNoteb
 export default function NotebookDetailPage() {
   const { id = "" } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [editNotebookOpen, setEditNotebookOpen] = useState(false);
@@ -125,7 +126,7 @@ export default function NotebookDetailPage() {
           ) : pages.length === 0 ? (
             <EmptyPages icon={FileText} title="Este caderno ainda não possui páginas" description="Crie uma página para começar a organizar seu conteúdo." actionLabel="Nova página" onAction={() => setCreateOpen(true)} />
           ) : (
-            <div className="space-y-3">{pages.map((page) => <NotebookPageCard key={page.id} page={page} onEdit={setEditingPage} onDelete={setDeletingPage} />)}</div>
+            <div className="space-y-3">{pages.map((page) => <NotebookPageCard key={page.id} page={page} onOpen={(item) => navigate(`/planner/cadernos/${id}/paginas/${item.id}`)} onEdit={setEditingPage} onDelete={setDeletingPage} />)}</div>
           )}
         </section>
       </main>

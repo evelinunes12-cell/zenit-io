@@ -28,7 +28,9 @@ const prefetched = new Set<string>();
 export const prefetchRoute = (path: string) => {
   if (prefetched.has(path)) return;
   const loader = path.startsWith("/planner/cadernos/")
-    ? () => import("@/pages/NotebookDetailPage")
+    ? path.includes("/paginas/")
+      ? () => import("@/pages/NotebookPageEditor")
+      : () => import("@/pages/NotebookDetailPage")
     : routeImports[path];
   if (!loader) return;
   prefetched.add(path);
