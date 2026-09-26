@@ -535,6 +535,7 @@ export type Database = {
       }
       notebook_pages: {
         Row: {
+          content: string
           created_at: string
           id: string
           notebook_id: string
@@ -543,6 +544,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          content?: string
           created_at?: string
           id?: string
           notebook_id: string
@@ -551,6 +553,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          content?: string
           created_at?: string
           id?: string
           notebook_id?: string
