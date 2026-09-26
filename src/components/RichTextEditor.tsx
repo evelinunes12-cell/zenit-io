@@ -28,7 +28,9 @@ interface RichTextEditorProps {
   content: string;
   onChange: (html: string) => void;
   editable?: boolean;
+  showToolbar?: boolean;
   placeholder?: string;
+  ariaLabel?: string;
   className?: string;
   minHeight?: string;
 }
@@ -60,7 +62,9 @@ const RichTextEditor = ({
   content,
   onChange,
   editable = true,
+  showToolbar = true,
   placeholder = "Adicione uma descrição...",
+  ariaLabel = "Editor de texto",
   className,
   minHeight = "120px",
 }: RichTextEditorProps) => {
@@ -82,6 +86,7 @@ const RichTextEditor = ({
     },
     editorProps: {
       attributes: {
+        "aria-label": ariaLabel,
         class: cn(
           "prose prose-sm dark:prose-invert max-w-none focus:outline-none",
           "prose-headings:mb-2 prose-headings:mt-3 prose-p:my-1",
@@ -111,7 +116,7 @@ const RichTextEditor = ({
 
   return (
     <div className={cn("rounded-md border border-border bg-background", className)}>
-      {editable && (
+      {editable && showToolbar && (
         <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-2 py-1.5 bg-muted/30">
           <ToolbarButton
             active={editor.isActive("heading", { level: 1 })}
