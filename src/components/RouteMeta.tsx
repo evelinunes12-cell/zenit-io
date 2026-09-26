@@ -100,6 +100,10 @@ const EXACT_META: Record<string, Meta> = {
 const PREFIX_META: Array<[string, Meta]> = [
   [
     "/planner/cadernos/",
+    { title: `Página do caderno — ${SITE_NAME}`, description: "Escreva e salve o conteúdo da sua página acadêmica no Zenit." },
+  ],
+  [
+    "/planner/cadernos/",
     { title: `Caderno — ${SITE_NAME}`, description: "Organize as páginas e informações do seu caderno acadêmico no Zenit." },
   ],
   [

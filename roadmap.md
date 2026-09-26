@@ -13,3 +13,11 @@
 - [x] Criar experiência interna navegável do caderno
 - [x] Exibir contagem real de páginas sem consultas individuais
 - [x] Validar CRUD, segurança, estados e responsividade
+
+## Cadernos 1.2A — Editor básico de páginas
+
+- [x] Adicionar conteúdo persistente às páginas sem criar blocos
+- [ ] Criar tela de escrita com título e editor básico reutilizado
+- [ ] Implementar salvamento explícito e estados de feedback
+- [ ] Proteger alterações não salvas
+- [ ] Validar persistência, erros e responsividade
