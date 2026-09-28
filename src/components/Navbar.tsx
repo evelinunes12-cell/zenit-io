@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Mountain, LogOut, Plus, ArrowLeft, Sun, Moon, ListTodo, StickyNote, Target, ChevronDown, BookOpenCheck, LibraryBig } from "lucide-react";
+import { Mountain, LogOut, Plus, ArrowLeft, Sun, Moon, ListTodo, StickyNote, Target, ChevronDown, BookOpenCheck, LibraryBig, FilePlus2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { NotificationBell } from "./NotificationBell";
 import ShortcutsHelpDialog from "./ShortcutsHelpDialog";
@@ -32,6 +32,7 @@ import { GoalDialog } from "@/components/planner/GoalDialog";
 import StudyLogDialog from "@/components/StudyLogDialog";
 import { toast } from "sonner";
 import { CreateNotebookDialog } from "@/components/notebooks/CreateNotebookDialog";
+import { CreateNotebookPageDialog } from "@/components/notebooks/CreateNotebookPageDialog";
 
 interface NavbarProps {
   minimal?: boolean;
@@ -47,6 +48,7 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [studyLogOpen, setStudyLogOpen] = useState(false);
   const [notebookDialogOpen, setNotebookDialogOpen] = useState(false);
+  const [notebookPageDialogOpen, setNotebookPageDialogOpen] = useState(false);
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
@@ -139,7 +141,7 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
                         </Button>
                       </DropdownMenuTrigger>
                     </TooltipTrigger>
-                    <TooltipContent>Criar tarefa, anotação, meta, caderno ou registro de estudo</TooltipContent>
+                    <TooltipContent>Criar tarefa, anotação, meta, caderno, página ou registro de estudo</TooltipContent>
                   </Tooltip>
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem onClick={() => navigate("/task/new")} className="gap-2">
@@ -157,6 +159,10 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
                     <DropdownMenuItem onClick={() => setNotebookDialogOpen(true)} className="gap-2">
                       <LibraryBig className="w-4 h-4" />
                       Novo caderno
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setNotebookPageDialogOpen(true)} className="gap-2">
+                      <FilePlus2 className="w-4 h-4" />
+                      Nova página
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setStudyLogOpen(true)} className="gap-2">
                       <BookOpenCheck className="w-4 h-4" />
@@ -209,6 +215,11 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
       />
 
       <CreateNotebookDialog open={notebookDialogOpen} onOpenChange={setNotebookDialogOpen} />
+      <CreateNotebookPageDialog
+        open={notebookPageDialogOpen}
+        onOpenChange={setNotebookPageDialogOpen}
+        onCreateNotebook={() => setNotebookDialogOpen(true)}
+      />
 
 
 
