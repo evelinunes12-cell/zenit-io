@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { fetchNotebookPage, saveNotebookPage, type NotebookPage } from "@/services/notebookPages";
+import { fetchNotebookPage, saveNotebookPage } from "@/services/notebookPages";
 import { fetchNotebook } from "@/services/notebooks";
 
 const normalizeContent = (value: string) => value === "<p></p>" ? "" : value;
@@ -164,11 +164,12 @@ export default function NotebookPageEditor() {
         <div className="space-y-3 border-b pb-6">
           <Input
             value={title}
-            onChange={(event) => setTitle(event.target.value)}
+            onChange={(event) => { setTitle(event.target.value); if (saveMutation.isError) saveMutation.reset(); }}
             aria-label="Título da página"
             maxLength={160}
             className="h-auto border-0 bg-transparent px-0 py-1 text-2xl font-bold shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-3xl"
           />
+          {!normalizedTitle && <p className="text-sm text-destructive">O título da página é obrigatório.</p>}
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground" aria-live="polite">
             <span>Última atualização: {updatedLabel}</span>
             <span className={cn("inline-flex items-center gap-1 font-medium", isDirty && "text-warning", saveMutation.isError && "text-destructive", !isDirty && !saveMutation.isError && "text-success")}>
