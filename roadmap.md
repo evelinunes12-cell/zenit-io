@@ -21,3 +21,9 @@
 - [x] Implementar salvamento explícito e estados de feedback
 - [x] Proteger alterações não salvas
 - [x] Validar persistência, erros e responsividade
+
+## Criação rápida de páginas
+
+- [x] Adicionar Nova página ao botão Criar da dashboard
+- [x] Permitir selecionar um caderno existente
+- [x] Criar a página e abrir seu editor
