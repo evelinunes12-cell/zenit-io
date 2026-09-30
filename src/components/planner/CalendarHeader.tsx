@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, addMonths, subMonths, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
 
 export type PlannerView = "month" | "week" | "notes" | "goals";
 
@@ -78,9 +77,6 @@ export function CalendarHeader({
             {opt.label}
           </button>
         ))}
-        <Button asChild variant="ghost" size="sm" className="h-auto rounded-md px-3 py-1 text-xs font-medium">
-          <Link to="/planner/cadernos"><BookOpen className="mr-1.5 h-3.5 w-3.5" />Cadernos</Link>
-        </Button>
       </div>
     </div>
   );

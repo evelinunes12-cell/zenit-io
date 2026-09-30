@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ThemeProvider } from "next-themes";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -73,6 +73,16 @@ const queryClient = new QueryClient({
   },
 });
 
+const LegacyNotebookRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={id ? `/cadernos/${id}` : "/cadernos"} replace />;
+};
+
+const LegacyNotebookPageRedirect = () => {
+  const { notebookId, pageId } = useParams();
+  return <Navigate to={notebookId && pageId ? `/cadernos/${notebookId}/paginas/${pageId}` : "/cadernos"} replace />;
+};
+
 const SidebarShell = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const pathname = location.pathname;
@@ -87,7 +97,8 @@ const SidebarShell = ({ children }: { children: React.ReactNode }) => {
     pathname === "/shared-environments" ||
     pathname === "/reports" ||
     pathname === "/archived" ||
-    (pathname === "/planner" || pathname.startsWith("/planner/")) ||
+    pathname === "/planner" ||
+    (pathname === "/cadernos" || pathname.startsWith("/cadernos/")) ||
     pathname === "/ranking" ||
     pathname === "/connect" ||
     pathname === "/task/new" ||
@@ -166,9 +177,12 @@ const App = () => {
                         <Route path="/reports" element={<ProtectedRoute><PageTransition><Reports /></PageTransition></ProtectedRoute>} />
                         <Route path="/archived" element={<ProtectedRoute><PageTransition><ArchivedTasks /></PageTransition></ProtectedRoute>} />
                         <Route path="/planner" element={<ProtectedRoute><PageTransition><Planner /></PageTransition></ProtectedRoute>} />
-                         <Route path="/planner/cadernos" element={<ProtectedRoute><PageTransition><NotebooksPage /></PageTransition></ProtectedRoute>} />
-                         <Route path="/planner/cadernos/:id" element={<ProtectedRoute><PageTransition><NotebookDetailPage /></PageTransition></ProtectedRoute>} />
-                          <Route path="/planner/cadernos/:notebookId/paginas/:pageId" element={<ProtectedRoute><PageTransition><NotebookPageEditor /></PageTransition></ProtectedRoute>} />
+                         <Route path="/cadernos" element={<ProtectedRoute><PageTransition><NotebooksPage /></PageTransition></ProtectedRoute>} />
+                         <Route path="/cadernos/:id" element={<ProtectedRoute><PageTransition><NotebookDetailPage /></PageTransition></ProtectedRoute>} />
+                          <Route path="/cadernos/:notebookId/paginas/:pageId" element={<ProtectedRoute><PageTransition><NotebookPageEditor /></PageTransition></ProtectedRoute>} />
+                         <Route path="/planner/cadernos" element={<Navigate to="/cadernos" replace />} />
+                         <Route path="/planner/cadernos/:id" element={<LegacyNotebookRedirect />} />
+                         <Route path="/planner/cadernos/:notebookId/paginas/:pageId" element={<LegacyNotebookPageRedirect />} />
                         <Route path="/ranking" element={<ProtectedRoute><PageTransition><RankingPage /></PageTransition></ProtectedRoute>} />
                         <Route path="/environment/new" element={<ProtectedRoute><PageTransition><EnvironmentForm /></PageTransition></ProtectedRoute>} />
                         <Route path="/environment/:id/edit" element={<ProtectedRoute><PageTransition><EnvironmentForm /></PageTransition></ProtectedRoute>} />

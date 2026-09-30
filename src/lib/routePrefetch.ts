@@ -3,7 +3,7 @@
 const routeImports: Record<string, () => Promise<unknown>> = {
   "/dashboard": () => import("@/pages/Dashboard"),
   "/planner": () => import("@/pages/Planner"),
-  "/planner/cadernos": () => import("@/pages/NotebooksPage"),
+  "/cadernos": () => import("@/pages/NotebooksPage"),
   "/shared-environments": () => import("@/pages/SharedEnvironments"),
   "/subjects": () => import("@/pages/Subjects"),
   "/task-statuses": () => import("@/pages/TaskStatuses"),
@@ -27,7 +27,7 @@ const prefetched = new Set<string>();
 
 export const prefetchRoute = (path: string) => {
   if (prefetched.has(path)) return;
-  const loader = path.startsWith("/planner/cadernos/")
+  const loader = path.startsWith("/cadernos/")
     ? path.includes("/paginas/")
       ? () => import("@/pages/NotebookPageEditor")
       : () => import("@/pages/NotebookDetailPage")

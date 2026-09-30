@@ -92,9 +92,9 @@ export default function NotebookDetailPage() {
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex min-w-0 items-center gap-2 px-4 py-3 md:px-6">
           <SidebarTrigger className="md:hidden" />
-          <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Voltar para Cadernos"><Link to="/planner/cadernos"><ArrowLeft className="h-4 w-4" /></Link></Button>
+          <Button asChild variant="ghost" size="icon" className="shrink-0" aria-label="Voltar para Cadernos"><Link to="/cadernos"><ArrowLeft className="h-4 w-4" /></Link></Button>
           <div className="min-w-0">
-            <p className="text-xs text-muted-foreground"><Link to="/planner/cadernos" className="hover:text-foreground">Cadernos</Link> / {notebook.title}</p>
+            <p className="text-xs text-muted-foreground"><Link to="/cadernos" className="hover:text-foreground">Cadernos</Link> / {notebook.title}</p>
             <h1 className="truncate text-lg font-bold">{notebook.title}</h1>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function NotebookDetailPage() {
           ) : pages.length === 0 ? (
             <EmptyPages icon={FileText} title="Este caderno ainda não possui páginas" description="Crie uma página para começar a organizar seu conteúdo." actionLabel="Nova página" onAction={() => setCreateOpen(true)} />
           ) : (
-            <div className="space-y-3">{pages.map((page) => <NotebookPageCard key={page.id} page={page} onOpen={(item) => navigate(`/planner/cadernos/${id}/paginas/${item.id}`)} onEdit={setEditingPage} onDelete={setDeletingPage} />)}</div>
+            <div className="space-y-3">{pages.map((page) => <NotebookPageCard key={page.id} page={page} onOpen={(item) => navigate(`/cadernos/${id}/paginas/${item.id}`)} onEdit={setEditingPage} onDelete={setDeletingPage} />)}</div>
           )}
         </section>
       </main>
@@ -150,7 +150,7 @@ function EmptyPages({ icon: Icon, title, description, actionLabel, onAction }: {
 }
 
 function NotebookUnavailable({ title, description, onRetry }: { title: string; description: string; onRetry?: () => void }) {
-  return <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center"><BookOpen className="mb-4 h-12 w-12 text-muted-foreground" /><h1 className="text-xl font-bold">{title}</h1><p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p><div className="mt-5 flex flex-wrap justify-center gap-2">{onRetry && <Button onClick={onRetry}>Tentar novamente</Button>}<Button asChild variant="outline"><Link to="/planner/cadernos">Voltar para Cadernos</Link></Button></div></div>;
+  return <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center"><BookOpen className="mb-4 h-12 w-12 text-muted-foreground" /><h1 className="text-xl font-bold">{title}</h1><p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p><div className="mt-5 flex flex-wrap justify-center gap-2">{onRetry && <Button onClick={onRetry}>Tentar novamente</Button>}<Button asChild variant="outline"><Link to="/cadernos">Voltar para Cadernos</Link></Button></div></div>;
 }
 
 function NotebookDetailSkeleton() {

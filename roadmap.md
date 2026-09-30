@@ -27,3 +27,10 @@
 - [x] Adicionar Nova página ao botão Criar da dashboard
 - [x] Permitir selecionar um caderno existente
 - [x] Criar a página e abrir seu editor
+
+## Cadernos como área principal
+
+- [x] Adicionar Cadernos ao menu principal
+- [x] Remover Cadernos do Planner
+- [x] Atualizar rotas e manter compatibilidade com links antigos
+- [ ] Validar navegação em desktop e celular
