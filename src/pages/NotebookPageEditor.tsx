@@ -111,7 +111,7 @@ export default function NotebookPageEditor() {
   };
 
   const handleBack = () => {
-    const destination = `/planner/cadernos/${notebookId}`;
+    const destination = `/cadernos/${notebookId}`;
     if (!isDirty) {
       navigate(destination);
       return;
@@ -127,7 +127,7 @@ export default function NotebookPageEditor() {
       <EditorUnavailable
         title="Não foi possível carregar a página"
         description="Tente novamente para continuar."
-        backPath={`/planner/cadernos/${notebookId}`}
+        backPath={`/cadernos/${notebookId}`}
         onRetry={() => { notebookQuery.refetch(); pageQuery.refetch(); }}
       />
     );
@@ -136,7 +136,7 @@ export default function NotebookPageEditor() {
   const notebook = notebookQuery.data;
   const page = pageQuery.data;
   if (!notebook || !page) {
-    return <EditorUnavailable title="Página não encontrada" description="Ela pode ter sido excluída ou não estar disponível para sua conta." backPath={notebook ? `/planner/cadernos/${notebookId}` : "/planner/cadernos"} />;
+    return <EditorUnavailable title="Página não encontrada" description="Ela pode ter sido excluída ou não estar disponível para sua conta." backPath={notebook ? `/cadernos/${notebookId}` : "/cadernos"} />;
   }
 
   const updatedLabel = formatDistanceToNow(new Date(page.updated_at), { addSuffix: true, locale: ptBR });

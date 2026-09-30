@@ -44,7 +44,7 @@ const EXACT_META: Record<string, Meta> = {
     description:
       "Organize aulas, compromissos, metas e anotações em um calendário unificado de estudos.",
   },
-  "/planner/cadernos": {
+  "/cadernos": {
     title: `Cadernos — ${SITE_NAME}`,
     description: "Crie e organize cadernos pessoais para seus conteúdos acadêmicos no Zenit.",
   },
@@ -99,7 +99,7 @@ const EXACT_META: Record<string, Meta> = {
 
 const PREFIX_META: Array<[string, Meta]> = [
   [
-    "/planner/cadernos/",
+    "/cadernos/",
     { title: `Caderno — ${SITE_NAME}`, description: "Organize as páginas e informações do seu caderno acadêmico no Zenit." },
   ],
   [
@@ -133,7 +133,7 @@ const PREFIX_META: Array<[string, Meta]> = [
 
 function resolveMeta(pathname: string): Meta {
   if (EXACT_META[pathname]) return EXACT_META[pathname];
-  if (pathname.startsWith("/planner/cadernos/") && pathname.includes("/paginas/")) {
+  if (pathname.startsWith("/cadernos/") && pathname.includes("/paginas/")) {
     return { title: `Página do caderno — ${SITE_NAME}`, description: "Escreva e salve o conteúdo da sua página acadêmica no Zenit." };
   }
   const prefix = PREFIX_META.find(([p]) => pathname.startsWith(p));

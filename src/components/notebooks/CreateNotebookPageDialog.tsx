@@ -46,7 +46,7 @@ export function CreateNotebookPageDialog({ open, onOpenChange, onCreateNotebook 
       queryClient.invalidateQueries({ queryKey: ["notebooks"] });
       onOpenChange(false);
       toast.success("Página criada!");
-      navigate(`/planner/cadernos/${notebookId}/paginas/${page.id}`);
+      navigate(`/cadernos/${notebookId}/paginas/${page.id}`);
     },
     onError: () => toast.error("Erro ao criar página"),
   });

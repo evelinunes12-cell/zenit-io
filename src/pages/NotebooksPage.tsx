@@ -12,7 +12,7 @@ import { NotebookDialog } from "@/components/notebooks/NotebookDialog";
 import { CreateNotebookDialog } from "@/components/notebooks/CreateNotebookDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { deleteNotebook, fetchNotebooks, updateNotebook, type Notebook, type NotebookInput } from "@/services/notebooks";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function NotebooksPage() {
   const { user } = useAuth();
@@ -72,7 +72,7 @@ export default function NotebooksPage() {
           <div className="flex min-w-0 items-center gap-2">
             <SidebarTrigger className="md:hidden" />
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground"><Link to="/planner" className="hover:text-foreground">Planner</Link> / Cadernos</p>
+              <p className="text-xs text-muted-foreground">Biblioteca de estudos</p>
               <h1 className="truncate text-lg font-bold">Cadernos</h1>
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function NotebooksPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredNotebooks.map((notebook) => (
-              <NotebookCard key={notebook.id} notebook={notebook} onOpen={(item) => navigate(`/planner/cadernos/${item.id}`)} onEdit={setEditingNotebook} onDelete={setDeletingNotebook} />
+              <NotebookCard key={notebook.id} notebook={notebook} onOpen={(item) => navigate(`/cadernos/${item.id}`)} onEdit={setEditingNotebook} onDelete={setDeletingNotebook} />
             ))}
           </div>
         )}
