@@ -33,4 +33,4 @@
 - [x] Adicionar Cadernos ao menu principal
 - [x] Remover Cadernos do Planner
 - [x] Atualizar rotas e manter compatibilidade com links antigos
-- [ ] Validar navegação em desktop e celular
+- [x] Validar navegação em desktop e celular
