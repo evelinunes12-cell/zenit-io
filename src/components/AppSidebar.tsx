@@ -30,12 +30,12 @@ import { useSharedEnvironmentsUnreadTotal } from "@/hooks/useSharedEnvironmentsU
 const menuItems = [
   { title: "Início", url: "/dashboard", icon: Home, description: "Painel principal com suas tarefas" },
   { title: "Planner", url: "/planner", icon: NotebookPen, description: "Planeje metas e anotações" },
-  { title: "Cadernos", url: "/cadernos", icon: LibraryBig, description: "Organize seus cadernos e páginas" },
+  { title: "Cadernos", url: "/cadernos", icon: LibraryBig, description: "Organize seus cadernos e páginas", isNew: true },
   { title: "Grupos de Trabalho", url: "/shared-environments", icon: Users, description: "Colabore com colegas em tarefas compartilhadas" },
   { title: "Disciplinas", url: "/subjects", icon: BookOpen, description: "Gerencie suas disciplinas/matérias" },
   { title: "Status", url: "/task-statuses", icon: ListChecks, description: "Personalize os status das tarefas" },
   { title: "Tarefas Arquivadas", url: "/archived", icon: Archive, description: "Tarefas que foram arquivadas" },
-  { title: "Conectar IA", url: "/connect", icon: Bot, description: "Use o Zenit dentro de assistentes como ChatGPT e Claude", isNew: true },
+  { title: "Conectar IA", url: "/connect", icon: Bot, description: "Use o Zenit dentro de assistentes como ChatGPT e Claude" },
 ];
 
 const analyticsSubItems = [
