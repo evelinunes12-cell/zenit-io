@@ -3,6 +3,8 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
+import { TaskItem, TaskList } from "@tiptap/extension-list";
+import NotebookEditorToolbar from "@/components/notebooks/NotebookEditorToolbar";
 import {
   Bold,
   Italic,
@@ -33,6 +35,9 @@ interface RichTextEditorProps {
   ariaLabel?: string;
   className?: string;
   minHeight?: string;
+  /** "notebook" renders the compact academic toolbar used in Cadernos. */
+  toolbarVariant?: "default" | "notebook";
+  toolbarClassName?: string;
 }
 
 const ToolbarButton = ({
@@ -67,6 +72,8 @@ const RichTextEditor = ({
   ariaLabel = "Editor de texto",
   className,
   minHeight = "120px",
+  toolbarVariant = "default",
+  toolbarClassName,
 }: RichTextEditorProps) => {
   const editor = useEditor({
     extensions: [
@@ -129,7 +136,12 @@ const RichTextEditor = ({
 
   return (
     <div className={cn("rounded-md border border-border bg-background", className)}>
-      {editable && showToolbar && (
+      {editable && showToolbar && toolbarVariant === "notebook" && (
+        <div className={cn("border-b border-border bg-background/95 backdrop-blur", toolbarClassName)}>
+          <NotebookEditorToolbar editor={editor} />
+        </div>
+      )}
+      {editable && showToolbar && toolbarVariant === "default" && (
         <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-2 py-1.5 bg-muted/30">
           <ToolbarButton
             active={editor.isActive("heading", { level: 1 })}

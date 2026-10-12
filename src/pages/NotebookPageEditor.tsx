@@ -183,7 +183,8 @@ export default function NotebookPageEditor() {
           <RichTextEditor
             content={content}
             onChange={(value) => { setContent(normalizeContent(value)); if (saveMutation.isError) saveMutation.reset(); }}
-            showToolbar={false}
+            toolbarVariant="notebook"
+            toolbarClassName="sticky top-[61px] z-20 -mx-1 rounded-none"
             placeholder="Comece a escrever..."
             ariaLabel="Conteúdo da página"
             minHeight="min(58vh, 680px)"
