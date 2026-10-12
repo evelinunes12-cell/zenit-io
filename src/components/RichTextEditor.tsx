@@ -3,6 +3,8 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
+import { TaskItem, TaskList } from "@tiptap/extension-list";
+import NotebookEditorToolbar from "@/components/notebooks/NotebookEditorToolbar";
 import {
   Bold,
   Italic,
@@ -33,6 +35,9 @@ interface RichTextEditorProps {
   ariaLabel?: string;
   className?: string;
   minHeight?: string;
+  /** "notebook" renders the compact academic toolbar used in Cadernos. */
+  toolbarVariant?: "default" | "notebook";
+  toolbarClassName?: string;
 }
 
 const ToolbarButton = ({
@@ -67,6 +72,8 @@ const RichTextEditor = ({
   ariaLabel = "Editor de texto",
   className,
   minHeight = "120px",
+  toolbarVariant = "default",
+  toolbarClassName,
 }: RichTextEditorProps) => {
   const editor = useEditor({
     extensions: [
@@ -74,8 +81,19 @@ const RichTextEditor = ({
         heading: { levels: [1, 2, 3] },
         bulletList: { keepMarks: true },
         orderedList: { keepMarks: true },
+        underline: false,
+        link: {
+          openOnClick: false,
+          autolink: true,
+          defaultProtocol: "https",
+          protocols: ["http", "https", "mailto", "tel"],
+          isAllowedUri: (url) => /^(https?:|mailto:|tel:)/i.test(url),
+          HTMLAttributes: { target: "_blank", rel: "noopener noreferrer nofollow" },
+        },
       }),
       Underline,
+      TaskList,
+      TaskItem.configure({ nested: true }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Placeholder.configure({ placeholder }),
     ],
@@ -91,6 +109,8 @@ const RichTextEditor = ({
           "prose prose-sm dark:prose-invert max-w-none focus:outline-none",
           "prose-headings:mb-2 prose-headings:mt-3 prose-p:my-1",
           "prose-ul:my-1 prose-ol:my-1 prose-li:my-0",
+          "prose-a:text-primary prose-blockquote:border-l-primary/50 prose-blockquote:text-muted-foreground prose-blockquote:not-italic",
+          "zenit-editor",
         ),
         style: `min-height: ${minHeight}`,
       },
@@ -116,7 +136,12 @@ const RichTextEditor = ({
 
   return (
     <div className={cn("rounded-md border border-border bg-background", className)}>
-      {editable && showToolbar && (
+      {editable && showToolbar && toolbarVariant === "notebook" && (
+        <div className={cn("border-b border-border bg-background/95 backdrop-blur", toolbarClassName)}>
+          <NotebookEditorToolbar editor={editor} />
+        </div>
+      )}
+      {editable && showToolbar && toolbarVariant === "default" && (
         <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-2 py-1.5 bg-muted/30">
           <ToolbarButton
             active={editor.isActive("heading", { level: 1 })}
